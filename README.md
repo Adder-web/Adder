@@ -110,7 +110,6 @@ config     → 설정
 - UI 상태만 Zustand로 관리한다
 - 두 상태를 혼용하지 않는다
 💻 코드 컨벤션
-규칙
 - 들여쓰기: 2 spaces
 - 세미콜론 사용
 - 큰따옴표 사용
@@ -120,7 +119,6 @@ config     → 설정
 - handler: handle prefix
 - 함수: 동사 + 명사
 🎨 Tailwind CSS
-클래스 순서
 1. layout
 2. position
 3. size
