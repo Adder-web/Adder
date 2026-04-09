@@ -1,1 +1,215 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #eef0f8;
+  --color-primary: #6b6ade;
+  --color-primary-dark: #5554c4;
+  --color-light-purple: #a8a7f0;
+  --color-soft-purple: #c5c4f5;
+  --color-text-dark: #1a1a2e;
+  --color-text-gray: #8b8ba7;
+  --color-char-green: #7ec8a4;
+  --color-char-purple: #9b89d4;
+  --color-char-pink: #f0a0a0;
+  --color-char-yellow: #f5c842;
+
+  --font-sans: "Noto Sans KR", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  cursor: none;
+}
+
+body {
+  font-family: "Noto Sans KR", sans-serif;
+  background-color: #eef0f8;
+  color: #1a1a2e;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Blob morphing ─────────────────────────────────────── */
+@keyframes blob-morph {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: rotate(5deg) scale(1.03);
+  }
+  50% {
+    border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%;
+    transform: rotate(0deg) scale(0.97);
+  }
+  75% {
+    border-radius: 60% 40% 60% 30% / 60% 40% 50% 50%;
+    transform: rotate(-5deg) scale(1.02);
+  }
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* ── Character card blob wobble ────────────────────────── */
+@keyframes blob-wobble {
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: scale(1) rotate(0deg);
+  }
+  33% {
+    border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
+    transform: scale(1.08) rotate(4deg);
+  }
+  66% {
+    border-radius: 70% 30% 40% 60% / 50% 40% 60% 50%;
+    transform: scale(0.95) rotate(-3deg);
+  }
+}
+
+/* ── Marquee ───────────────────────────────────────────── */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Card shimmer ──────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* ── Slow float ────────────────────────────────────────── */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+/* ── Progress bar fill ─────────────────────────────────── */
+@keyframes bar-fill {
+  from {
+    width: 0;
+  }
+}
+
+/* ── Orbit rotation ────────────────────────────────────── */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbit-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* ── Pulse glow ────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* ── Cursor ────────────────────────────────────────────── */
+.cursor-dot,
+.cursor-ring {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6b6ade;
+}
+
+.cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(107, 106, 222, 0.6);
+  background: transparent;
+  transition: width 0.2s, height 0.2s, background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-family: "Space Grotesk", sans-serif;
+  color: transparent;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.cursor-ring.hovered {
+  width: 56px;
+  height: 56px;
+  background-color: rgba(107, 106, 222, 0.15);
+  border-color: #6b6ade;
+  color: #6b6ade;
+}
+
+/* ── Nav underline animation ───────────────────────────── */
+.nav-link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background-color: #6b6ade;
+  transition: width 0.3s ease;
+}
+.nav-link-underline:hover::after {
+  width: 100%;
+}
