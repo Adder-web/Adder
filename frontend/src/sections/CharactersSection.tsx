@@ -1,179 +1,122 @@
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import Homa from "../assets/character/Homa.png";
+import Move from "../assets/character/Move.png";
+import Orion from "../assets/character/Orion.png";
+import Algo from "../assets/character/Algo.png";
 
 const CHARACTERS = [
   {
     name: "호마",
-    role: "Warm Curator",
-    color: "#7EC8A4",
-    colorLight: "rgba(126,200,164,0.15)",
-    colorGrad: "linear-gradient(135deg, #a8e6c8, #7EC8A4, #5bb88a)",
-    desc: "따뜻하고 감성적인 대화로 당신의 기억을 따라가요.",
-    quote: "\"기억은 향이 되고, 향은 기억이 돼요.\"",
+    role: "Curiosity Perfumer",
+    desc: "호기심 많은 탐험가형 조향사. 예상 밖의 향 조합을 즐겨요.",
+    ment: "오, 이 향 재밌겠는걸요?",
+    img: Homa,
+    gradient: "from-char-bg-1-start to-char-bg-1-end",
   },
   {
     name: "무브",
-    role: "Flow Artist",
-    color: "#9B89D4",
-    colorLight: "rgba(155,137,212,0.15)",
-    colorGrad: "linear-gradient(135deg, #c4b5f0, #9B89D4, #7a6bc0)",
-    desc: "자유롭게 흐르는 대화 속에서 향의 흐름을 찾아요.",
-    quote: "\"향은 흐름이에요. 멈추지 말고 이야기해요.\"",
+    role: "Vibe Perfumer",
+    desc: "감각적인 분위기를 읽는 조향사. 느낌 가는 대로 선택해요.",
+    ment: "깊게 생각 말고 느낌 가는 대로 가보자!",
+    img: Move,
+    gradient: "from-char-bg-2-start to-char-bg-2-end",
   },
   {
     name: "오리온",
-    role: "Star Navigator",
-    color: "#F0A0A0",
-    colorLight: "rgba(240,160,160,0.15)",
-    colorGrad: "linear-gradient(135deg, #f8c8c8, #F0A0A0, #e07070)",
-    desc: "별처럼 빛나는 감각으로 당신의 향을 길들여요.",
-    quote: "\"모든 감각은 별처럼 연결되어 있어요.\"",
+    role: "Balance Perfumer",
+    desc: "차분하게 감정을 정리해주는 균형 조향사.",
+    ment: "천천히 생각해도 괜찮아요.",
+    img: Orion,
+    gradient: "from-char-bg-3-start to-char-bg-3-end",
   },
   {
     name: "알고",
-    role: "Data Poet",
-    color: "#F5C842",
-    colorLight: "rgba(245,200,66,0.15)",
-    colorGrad: "linear-gradient(135deg, #fae090, #F5C842, #e0a800)",
-    desc: "데이터 속에서 시를 발견하고 향을 수식화해요.",
-    quote: "\"숫자 너머에 당신의 향이 있어요.\"",
+    role: "Algorithm Perfumer",
+    desc: "향을 구조적으로 분석하는 조향사. 단계별로 설계해요.",
+    ment: "포근함을 선호하시나요?",
+    img: Algo,
+    gradient: "from-char-bg-4-start to-char-bg-4-end",
   },
 ];
 
+type CharacterCardProps = {
+  name: string;
+  role: string;
+  desc: string;
+  ment: string;
+  img: string;
+  gradient: string;
+};
+
 export default function CharactersSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(titleRef.current, {
-        y: 40,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out",
-        scrollTrigger: { trigger: titleRef.current, start: "top 85%" },
-      });
-
-      cardsRef.current.forEach((card, i) => {
-        if (!card) return;
-        gsap.from(card, {
-          y: 60,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power3.out",
-          delay: i * 0.1,
-          scrollTrigger: { trigger: card, start: "top 90%" },
-        });
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
     <section
-      ref={sectionRef}
-      className="py-28 px-8"
-      style={{
-        background: "linear-gradient(180deg, #E8E6FA 0%, #DDE0F5 100%)",
-      }}
+      id="chat"
+      className="relative mx-auto max-w-6xl px-6 py-24 md:py-28"
     >
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div ref={titleRef} className="text-center mb-16">
-          <p
-            className="text-xs font-semibold tracking-widest mb-4 text-text-gray"
-            style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "0.12em" }}
-          >
-            CHARACTERS
-          </p>
-          <h2
-            className="font-bold text-text-dark"
-            style={{
-              fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
-            }}
-          >
-            어떤 방식으로 향을 설계할까요?
-          </h2>
-        </div>
+      <div className="text-center">
+        <p className="mb-6 inline-flex rounded-full border border-white/60 bg-white/30 px-5 py-2 text-label uppercase text-primary/70">
+          CHARACTERS
+        </p>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CHARACTERS.map((char, i) => (
-            <div
-              key={char.name}
-              ref={(el) => { cardsRef.current[i] = el; }}
-              className="group relative rounded-3xl bg-white p-6 flex flex-col items-center text-center overflow-hidden cursor-pointer transition-all duration-300"
-              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget;
-                el.style.backgroundColor = char.colorLight;
-                el.style.boxShadow = `0 20px 48px ${char.color}33`;
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget;
-                el.style.backgroundColor = "white";
-                el.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)";
-              }}
-            >
-              {/* Blob avatar */}
-              <div
-                className="relative mb-5"
-                style={{ width: 100, height: 100 }}
-              >
-                <div
-                  className="w-full h-full group-hover:[animation-play-state:running]"
-                  style={{
-                    background: char.colorGrad,
-                    borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
-                    animation: "blob-wobble 3s ease-in-out infinite paused",
-                    boxShadow: `0 8px 24px ${char.color}40`,
-                  }}
-                />
-              </div>
+        <h2 className="text-title-lg text-primary-dark md:text-title-xl">
+          어떤 방식으로 향을 설계할까요?
+        </h2>
 
-              {/* Name */}
-              <h3
-                className="font-bold text-text-dark mb-1"
-                style={{ fontSize: "1.1rem" }}
-              >
-                {char.name}
-              </h3>
+        <p className="mx-auto mt-6 max-w-2xl text-body-sm text-primary/60 sm:text-body-md">
+          대화 스타일이 다른 4명의 조향사가 준비하고 있어요.
+          <br className="hidden sm:block" />
+          언제든지 대화하세요.
+        </p>
+      </div>
 
-              {/* Role */}
-              <p
-                className="text-xs font-semibold tracking-widest mb-3"
-                style={{
-                  color: char.color,
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                {char.role}
-              </p>
-
-              {/* Desc */}
-              <p className="text-text-gray text-sm leading-relaxed mb-4">
-                {char.desc}
-              </p>
-
-              {/* Quote */}
-              <p
-                className="text-xs italic leading-relaxed"
-                style={{ color: char.color }}
-              >
-                {char.quote}
-              </p>
-            </div>
-          ))}
-        </div>
+      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {CHARACTERS.map((character) => (
+          <CharacterCard key={character.name} {...character} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function CharacterCard({
+  name,
+  role,
+  desc,
+  ment,
+  img,
+  gradient,
+}: CharacterCardProps) {
+  return (
+    <article
+      className={`group relative overflow-hidden rounded-3xl border border-white/60 bg-linear-to-br ${gradient} p-5 shadow-[0_10px_30px_rgba(75,63,140,0.10)] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(75,63,140,0.16)]`}
+    >
+      {/* 오른쪽 위 하이라이트 */}
+      <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_0%,rgba(0,0,0,0)_100%)]" />
+      {/* 이미지 양각 카드 */}
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-white/70 bg-white/50 shadow-[0_18px_35px_rgba(75,63,140,0.15),inset_0_1px_1px_rgba(255,255,255,0.8)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_24px_45px_rgba(75,63,140,0.20),inset_0_1px_1px_rgba(255,255,255,0.9)]">
+        <span className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-white/75" />
+        <span className="absolute bottom-4 left-4 h-3 w-3 rounded-full bg-white/60" />
+
+        <div className="absolute inset-0 bg-linear-to-br from-white/35 via-transparent to-primary/10" />
+
+        <img
+          src={img}
+          alt={name}
+          className="relative z-10 h-[78%] w-[78%] object-contain transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+      <h3 className="relative z-10 mt-6 text-title-sm text-primary-dark">
+        {name}
+      </h3>
+      <p className="relative z-10 mt-2 inline-flex rounded-full border border-white/60 bg-white/40 px-2.5 py-0.5 text-caption text-primary/70">
+        {role}
+      </p>
+      <p className="relative z-10 mt-5 min-h-20 text-caption text-primary/65">
+        {desc}
+      </p>
+      <div className="relative z-10 mt-5 border-t border-white/40 pt-5">
+        <p className="text-body-sm font-medium text-primary/75">“{ment}”</p>
+      </div>{" "}
+    </article>
   );
 }

@@ -2,10 +2,30 @@ import { useState, useRef, useEffect } from "react";
 import Navbar from "../components/Navbar";
 
 const CHARACTERS = [
-  { name: "호마", color: "#7EC8A4", colorBg: "rgba(126,200,164,0.15)", grad: "linear-gradient(135deg, #a8e6c8, #7EC8A4)" },
-  { name: "무브", color: "#9B89D4", colorBg: "rgba(155,137,212,0.15)", grad: "linear-gradient(135deg, #c4b5f0, #9B89D4)" },
-  { name: "오리온", color: "#F0A0A0", colorBg: "rgba(240,160,160,0.15)", grad: "linear-gradient(135deg, #f8c8c8, #F0A0A0)" },
-  { name: "알고", color: "#F5C842", colorBg: "rgba(245,200,66,0.15)", grad: "linear-gradient(135deg, #fae090, #F5C842)" },
+  {
+    name: "호마",
+    color: "#7EC8A4",
+    colorBg: "rgba(126,200,164,0.15)",
+    grad: "linear-gradient(135deg, #a8e6c8, #7EC8A4)",
+  },
+  {
+    name: "무브",
+    color: "#9B89D4",
+    colorBg: "rgba(155,137,212,0.15)",
+    grad: "linear-gradient(135deg, #c4b5f0, #9B89D4)",
+  },
+  {
+    name: "오리온",
+    color: "#F0A0A0",
+    colorBg: "rgba(240,160,160,0.15)",
+    grad: "linear-gradient(135deg, #f8c8c8, #F0A0A0)",
+  },
+  {
+    name: "알고",
+    color: "#F5C842",
+    colorBg: "rgba(245,200,66,0.15)",
+    grad: "linear-gradient(135deg, #fae090, #F5C842)",
+  },
 ];
 
 interface Message {
@@ -48,7 +68,10 @@ const NOTE_COLORS: Record<string, string> = {
 const KEYWORDS = ["고요함", "감성적", "편안함", "자연스러운", "따뜻한"];
 
 function formatTime() {
-  return new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  return new Date().toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function Chat() {
@@ -65,11 +88,18 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const sendMessage = () => {
     if (!input.trim()) return;
-    const userMsg: Message = { id: Date.now(), role: "user", text: input, time: formatTime() };
+    const userMsg: Message = {
+      id: Date.now(),
+      role: "user",
+      text: input,
+      time: formatTime(),
+    };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setProgress((p) => Math.min(p + 1, 7));
@@ -87,11 +117,17 @@ export default function Chat() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#EEF0F8" }}>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ backgroundColor: "#EEF0F8" }}
+    >
       <Navbar />
 
       <div className="flex flex-1 pt-16 h-[calc(100vh-4rem)] overflow-hidden">
@@ -100,7 +136,11 @@ export default function Chat() {
           {/* Character selector tabs */}
           <div
             className="flex items-center gap-2 px-6 py-3 border-b overflow-x-auto"
-            style={{ borderColor: "rgba(107,106,222,0.15)", backgroundColor: "rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" }}
+            style={{
+              borderColor: "rgba(107,106,222,0.15)",
+              backgroundColor: "rgba(255,255,255,0.7)",
+              backdropFilter: "blur(12px)",
+            }}
           >
             {CHARACTERS.map((c, i) => (
               <button
@@ -109,8 +149,16 @@ export default function Chat() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap"
                 style={
                   activeChar === i
-                    ? { background: c.colorBg, color: c.color, border: `1.5px solid ${c.color}40` }
-                    : { background: "transparent", color: "#8B8BA7", border: "1.5px solid transparent" }
+                    ? {
+                        background: c.colorBg,
+                        color: c.color,
+                        border: `1.5px solid ${c.color}40`,
+                      }
+                    : {
+                        background: "transparent",
+                        color: "#8B8BA7",
+                        border: "1.5px solid transparent",
+                      }
                 }
               >
                 <div
@@ -147,13 +195,16 @@ export default function Chat() {
                   />
                 )}
 
-                <div className={`flex flex-col gap-1 max-w-[72%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                <div
+                  className={`flex flex-col gap-1 max-w-[72%] ${msg.role === "user" ? "items-end" : "items-start"}`}
+                >
                   <div
                     className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
                     style={
                       msg.role === "user"
                         ? {
-                            background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
+                            background:
+                              "linear-gradient(135deg, #6B6ADE, #9B89D4)",
                             color: "white",
                             borderBottomRightRadius: 4,
                           }
@@ -167,7 +218,9 @@ export default function Chat() {
                   >
                     {msg.text}
                   </div>
-                  <span className="text-xs" style={{ color: "#8B8BA7" }}>{msg.time}</span>
+                  <span className="text-xs" style={{ color: "#8B8BA7" }}>
+                    {msg.time}
+                  </span>
                 </div>
               </div>
             ))}
@@ -177,7 +230,11 @@ export default function Chat() {
           {/* Input area */}
           <div
             className="px-6 py-4 border-t"
-            style={{ borderColor: "rgba(107,106,222,0.15)", backgroundColor: "rgba(255,255,255,0.8)", backdropFilter: "blur(12px)" }}
+            style={{
+              borderColor: "rgba(107,106,222,0.15)",
+              backgroundColor: "rgba(255,255,255,0.8)",
+              backdropFilter: "blur(12px)",
+            }}
           >
             <div className="flex items-center gap-3 max-w-3xl mx-auto">
               <div
@@ -196,12 +253,20 @@ export default function Chat() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
                   onFocus={(e) => {
-                    (e.currentTarget.parentElement as HTMLElement).style.borderColor = "#6B6ADE";
-                    (e.currentTarget.parentElement as HTMLElement).style.boxShadow = "0 0 0 3px rgba(107,106,222,0.12)";
+                    (
+                      e.currentTarget.parentElement as HTMLElement
+                    ).style.borderColor = "#6B6ADE";
+                    (
+                      e.currentTarget.parentElement as HTMLElement
+                    ).style.boxShadow = "0 0 0 3px rgba(107,106,222,0.12)";
                   }}
                   onBlur={(e) => {
-                    (e.currentTarget.parentElement as HTMLElement).style.borderColor = "rgba(107,106,222,0.2)";
-                    (e.currentTarget.parentElement as HTMLElement).style.boxShadow = "0 2px 12px rgba(107,106,222,0.06)";
+                    (
+                      e.currentTarget.parentElement as HTMLElement
+                    ).style.borderColor = "rgba(107,106,222,0.2)";
+                    (
+                      e.currentTarget.parentElement as HTMLElement
+                    ).style.boxShadow = "0 2px 12px rgba(107,106,222,0.06)";
                   }}
                 />
               </div>
@@ -214,7 +279,13 @@ export default function Chat() {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 8L14 8M14 8L9 3M14 8L9 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M2 8L14 8M14 8L9 3M14 8L9 13"
+                    stroke="white"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -251,8 +322,18 @@ export default function Chat() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center px-6 pt-6 pb-4">
-              <p className="text-xs font-semibold tracking-widest text-text-gray" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>SCENT PROFILE</p>
-              <button onClick={() => setDrawerOpen(false)} className="text-text-gray hover:text-text-dark">✕</button>
+              <p
+                className="text-xs font-semibold tracking-widest text-text-gray"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                SCENT PROFILE
+              </p>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="text-text-gray hover:text-text-dark"
+              >
+                ✕
+              </button>
             </div>
             <ScentPanel progress={progress} />
           </div>
@@ -277,7 +358,10 @@ function ScentPanel({ progress }: { progress: number }) {
       <div>
         <p
           className="text-xs font-semibold tracking-widest mb-1 text-text-gray"
-          style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "0.12em" }}
+          style={{
+            fontFamily: "'Space Grotesk', sans-serif",
+            letterSpacing: "0.12em",
+          }}
         >
           SCENT PROFILE
         </p>
@@ -327,19 +411,27 @@ function ScentPanel({ progress }: { progress: number }) {
             }}
           />
         </div>
-        <p className="text-xs text-text-gray mt-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <p
+          className="text-xs text-text-gray mt-3"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
           향 입자가 모이고 있어요 ✦
         </p>
       </div>
 
       {/* Notes */}
       <div>
-        <p className="text-sm font-semibold text-text-dark mb-4">발견된 향 노트</p>
+        <p className="text-sm font-semibold text-text-dark mb-4">
+          발견된 향 노트
+        </p>
         {(["top", "mid", "base"] as const).map((tier) => (
           <div key={tier} className="mb-4">
             <p
               className="text-xs font-semibold tracking-wider mb-2 uppercase"
-              style={{ color: NOTE_COLORS[tier], fontFamily: "'Space Grotesk', sans-serif" }}
+              style={{
+                color: NOTE_COLORS[tier],
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
             >
               {tier} note
             </p>
@@ -349,7 +441,10 @@ function ScentPanel({ progress }: { progress: number }) {
                   <span className="text-text-dark">{note.name}</span>
                   <span style={{ color: NOTE_COLORS[tier] }}>{note.pct}%</span>
                 </div>
-                <div className="h-1.5 rounded-full" style={{ backgroundColor: "rgba(107,106,222,0.1)" }}>
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{ backgroundColor: "rgba(107,106,222,0.1)" }}
+                >
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -399,4 +494,3 @@ function ScentPanel({ progress }: { progress: number }) {
     </div>
   );
 }
-

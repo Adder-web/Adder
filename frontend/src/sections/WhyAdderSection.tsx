@@ -1,150 +1,76 @@
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
-
-const CARDS = [
+const WHY_CARDS = [
   {
-    icon: "🧠",
-    iconBg: "linear-gradient(135deg, #EEF0F8, #C5C4F5)",
     title: "기억",
-    desc: "당신의 소중한 기억과 감정을 이야기해요. AI가 그 속에서 향의 실마리를 찾아냅니다.",
-    from: "left",
+    desc: "기억 속 장면을 이야기 해요",
+    gradient: "from-card-blue-start via-card-blue-mid to-card-blue-end",
   },
   {
-    icon: "💬",
-    iconBg: "linear-gradient(135deg, #DDE0F5, #A8A7F0)",
     title: "대화",
-    desc: "자연스러운 대화를 통해 당신의 취향을 파악해요. 질문에 답하다 보면 향이 완성됩니다.",
-    from: "bottom",
+    desc: "AI 캐릭터와 대화를 통해 향을 설계해요",
+    gradient: "from-card-purple-start via-card-purple-mid to-card-purple-end",
   },
   {
-    icon: "✨",
-    iconBg: "linear-gradient(135deg, #E8E6FA, #6B6ADE)",
     title: "Glow",
-    desc: "완성된 나만의 향 레시피. Top·Mid·Base 노트로 구성된 특별한 향수를 선물받아요.",
-    from: "right",
+    desc: "향이 기억을 반짝이게 만들어요",
+    gradient: "from-card-mint-start via-card-mint-mid to-card-mint-end",
   },
 ];
 
+type WhyCardProps = {
+  title: string;
+  desc: string;
+  gradient: string;
+};
+
 export default function WhyAdderSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Title reveal
-      gsap.from(titleRef.current, {
-        y: 48,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: titleRef.current,
-          start: "top 85%",
-        },
-      });
-
-      // Cards from different directions
-      cardsRef.current.forEach((card, i) => {
-        if (!card) return;
-        const fromMap = { left: { x: -80, y: 0 }, bottom: { x: 0, y: 60 }, right: { x: 80, y: 0 } };
-        const from = fromMap[CARDS[i].from as keyof typeof fromMap];
-        gsap.from(card, {
-          ...from,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 88%",
-          },
-          delay: i * 0.1,
-        });
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <section ref={sectionRef} className="py-28 px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div ref={titleRef} className="text-center mb-16">
-          <p
-            className="text-xs font-semibold tracking-widest mb-4 text-text-gray"
-            style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "0.12em" }}
-          >
-            WHY ADDER?
-          </p>
-          <h2
-            className="font-bold text-text-dark"
-            style={{
-              fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
-            }}
-          >
-            향을 고르는 것이 아닌,
-            <br />
-            향을 만들어가는 경험
-          </h2>
-        </div>
+    <section className="relative mx-auto max-w-6xl px-6 py-24 md:py-28">
+      <div className="text-center">
+        <p className="mb-6 inline-flex rounded-full border border-white/60 bg-white/30 px-5 py-2 text-label uppercase text-primary/70">
+          WHY ADDER?
+        </p>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CARDS.map((card, i) => (
-            <div
-              key={card.title}
-              ref={(el) => { cardsRef.current[i] = el; }}
-              className="group relative rounded-2xl bg-white p-8 overflow-hidden transition-all duration-300"
-              style={{
-                boxShadow: "0 4px 24px rgba(107,106,222,0.08)",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget;
-                el.style.transform = "translateY(-8px)";
-                el.style.boxShadow = "0 20px 48px rgba(107,106,222,0.18)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget;
-                el.style.transform = "translateY(0)";
-                el.style.boxShadow = "0 4px 24px rgba(107,106,222,0.08)";
-              }}
-            >
-              {/* Shimmer overlay */}
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{
-                  background:
-                    "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%)",
-                  backgroundSize: "200% 100%",
-                  animation: "shimmer 1.2s ease-in-out",
-                }}
-              />
+        <h2 className="text-title-lg text-primary-dark md:text-title-xl">
+          향을 고르는 것이 아닌,
+          <br />
+          향을 만들어가는 경험
+        </h2>
 
-              {/* Icon area */}
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-2xl"
-                style={{ background: card.iconBg }}
-              >
-                {card.icon}
-              </div>
+        <p className="mx-auto mt-6 max-w-2xl text-body-sm text-primary/60 sm:text-body-md">
+          Adder는 완성된 향을 추천하지 않습니다.
+          <br />
+          당신의 기억과 감정을 이야기하면, 조향사 캐릭터가 함께 향을 설계합니다.
+        </p>
+      </div>
 
-              <h3
-                className="font-bold text-text-dark mb-3"
-                style={{ fontSize: "1.2rem", letterSpacing: "-0.01em" }}
-              >
-                {card.title}
-              </h3>
-              <p className="text-text-gray text-sm leading-relaxed">{card.desc}</p>
-            </div>
-          ))}
-        </div>
+      <div className="mt-14 grid gap-6 md:grid-cols-3">
+        {WHY_CARDS.map((card) => (
+          <WhyCard key={card.title} {...card} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function WhyCard({ title, desc, gradient }: WhyCardProps) {
+  return (
+    <article
+      className={`group relative h-56 overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-br ${gradient} p-8 shadow-[0_10px_30px_rgba(0,0,0,0.08),0_20px_50px_rgba(75,63,140,0.10)] transition-all duration-300 hover:-translate-y-1`}
+    >
+      {/* 오른쪽 위 반원 */}
+      <div className="absolute -right-20 -top-24 h-60 w-60 rounded-full bg-white/25" />
+
+      {/* 빛 스윕 */}
+      <div className="absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-all duration-700 group-hover:left-full group-hover:opacity-100" />
+
+      {/* 아이콘 박스 */}
+      <div className="relative z-10 h-14 w-14 rounded-2xl bg-white/60 shadow-lg backdrop-blur-md transition-transform duration-300 group-hover:-translate-y-1" />
+
+      {/* 텍스트 */}
+      <div className="absolute bottom-7 left-8 z-10">
+        <h3 className="text-title-md text-primary-dark">{title}</h3>
+        <p className="mt-3 text-body-sm text-primary/70">{desc}</p>
+      </div>
+    </article>
   );
 }

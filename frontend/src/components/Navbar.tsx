@@ -48,11 +48,14 @@ export default function Navbar() {
       </div>
 
       {/* Right Actions */}
-      <div className="hidden md:flex items-center gap-4">
-        <button className="text-sm font-medium text-text-dark hover:text-primary transition-colors">
+      <div className="hidden md:flex items-center gap-3">
+        {/* Log In */}
+        <button className="px-4 py-2 text-sm font-medium text-text-dark rounded-full transition-colors duration-200 hover:text-primary">
           Log In
         </button>
-        <button className="px-5 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/30">
+
+        {/* Sign Up */}
+        <button className="px-5 py-2 text-sm font-medium text-primary rounded-full border border-primary/30 bg-white/40 backdrop-blur-sm transition-all duration-200 hover:bg-primary/5">
           Sign Up
         </button>
       </div>
