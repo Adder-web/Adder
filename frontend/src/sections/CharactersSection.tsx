@@ -108,15 +108,13 @@ function CharacterCard({
       <h3 className="relative z-10 mt-6 text-title-sm text-primary-dark">
         {name}
       </h3>
-      <p className="relative z-10 mt-2 inline-flex rounded-full border border-white/60 bg-white/40 px-2.5 py-0.5 text-caption text-primary/70">
+      <p className="relative z-10 mt-2 inline-flex rounded-full border border-white/60 bg-white/40 px-2.5 text-caption text-primary/70">
         {role}
       </p>
-      <p className="relative z-10 mt-5 min-h-20 text-caption text-primary/65">
-        {desc}
-      </p>
-      <div className="relative z-10 mt-5 border-t border-white/40 pt-5">
+      <p className="relative z-10 mt-5  text-caption text-primary/65">{desc}</p>
+      <div className="relative z-10 border-t border-white/40 mt-3">
         <p className="text-body-sm font-medium text-primary/75">“{ment}”</p>
-      </div>{" "}
+      </div>
     </article>
   );
 }
