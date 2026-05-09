@@ -4,7 +4,11 @@ type SectionTitleProps = {
   desc?: React.ReactNode;
 };
 
-export default function SectionTitle({ label, title, desc }: SectionTitleProps) {
+export default function SectionTitle({
+  label,
+  title,
+  desc,
+}: SectionTitleProps) {
   return (
     <div className="text-center">
       {label && (
