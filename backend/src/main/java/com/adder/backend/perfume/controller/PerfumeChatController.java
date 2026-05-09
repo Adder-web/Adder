@@ -16,6 +16,9 @@ public class PerfumeChatController {
 
     @PostMapping("/chat")
     public PerfumeChatResponse chat(@Valid @RequestBody PerfumeChatRequest request) {
-        return perfumeChatService.chat(request.getMessage());
+        return perfumeChatService.chat(
+                request.getMessage(),
+                request.getCharacterName()
+        );
     }
 }
