@@ -1,27 +1,42 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { sendPerfumeChat } from "../api/perfumeApi";
+import type { CharacterType } from "../data/perfumeQuestions";
+import { CHARACTER_TONES } from "../data/characterTone";
 
-const CHARACTERS = [
+type CharacterItem = {
+  id: CharacterType;
+  name: string;
+  color: string;
+  colorBg: string;
+  grad: string;
+};
+
+const CHARACTERS: CharacterItem[] = [
   {
+    id: "homa",
     name: "호마",
     color: "#7EC8A4",
     colorBg: "rgba(126,200,164,0.15)",
     grad: "linear-gradient(135deg, #a8e6c8, #7EC8A4)",
   },
   {
+    id: "move",
     name: "무브",
     color: "#9B89D4",
     colorBg: "rgba(155,137,212,0.15)",
     grad: "linear-gradient(135deg, #c4b5f0, #9B89D4)",
   },
   {
+    id: "orion",
     name: "오리온",
     color: "#F0A0A0",
     colorBg: "rgba(240,160,160,0.15)",
     grad: "linear-gradient(135deg, #f8c8c8, #F0A0A0)",
   },
   {
+    id: "algo",
     name: "알고",
     color: "#F5C842",
     colorBg: "rgba(245,200,66,0.15)",
@@ -36,37 +51,25 @@ interface Message {
   time: string;
 }
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: 1,
-    role: "ai",
-    text: "안녕하세요! 저는 호마예요. 오늘 어떤 기억이나 감정을 향으로 담고 싶으신가요? 편하게 이야기해 주세요 ✦",
-    time: "오후 2:30",
-  },
+const TOTAL_QUESTION_COUNT = 5;
+
+const PERFUME_QUESTIONS = [
+  "오늘 어떤 기억이나 감정을 향으로 담고 싶으신가요?",
+  "그 향을 떠올렸을 때 가장 먼저 생각나는 장소나 순간은 어디인가요?",
+  "그 장면의 분위기는 가볍고 산뜻한 쪽인가요, 깊고 차분한 쪽인가요?",
+  "좋아하는 계절, 날씨, 색감이 있다면 함께 알려주세요.",
+  "마지막으로 피하고 싶은 향이나 불편하게 느끼는 향이 있다면 알려주세요.",
 ];
 
-const NOTES_DATA = {
-  top: [
-    { name: "베르가못", pct: 72 },
-    { name: "레몬 제스트", pct: 45 },
-  ],
-  mid: [
-    { name: "로즈", pct: 60 },
-    { name: "자스민", pct: 38 },
-  ],
-  base: [
-    { name: "샌달우드", pct: 55 },
-    { name: "머스크", pct: 42 },
-  ],
-};
+const hiddenScentNames = ["???", "?? ?", "? ??", "???", "?? ??"];
 
-const NOTE_COLORS: Record<string, string> = {
-  top: "#6B6ADE",
-  mid: "#9B89D4",
-  base: "#7EC8A4",
-};
-
-const KEYWORDS = ["고요함", "감성적", "편안함", "자연스러운", "따뜻한"];
+const analysisMessages = [
+  "아직 이름 붙일 수 없는 향의 첫 단서를 모으고 있어요.",
+  "답변 속 분위기가 향의 방향으로 천천히 변환되고 있어요.",
+  "취향의 결이 조금씩 겹치며 하나의 향으로 정리되고 있어요.",
+  "선호하는 무드와 감각의 흐름을 조심스럽게 분석하고 있어요.",
+  "거의 완성 단계에 가까워지고 있어요. 마지막 단서를 정리하는 중이에요.",
+];
 
 function formatTime() {
   return new Date().toLocaleTimeString("ko-KR", {
@@ -75,17 +78,46 @@ function formatTime() {
   });
 }
 
+function getRandomItem<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function createInitialMessage(character: CharacterItem): Message {
+  const tone = CHARACTER_TONES[character.id];
+
+  return {
+    id: Date.now(),
+    role: "ai",
+    text: `안녕하세요. 저는 ${tone.name}예요. ${PERFUME_QUESTIONS[0]}`,
+    time: formatTime(),
+  };
+}
+
 export default function Chat() {
+  const navigate = useNavigate();
+
   const [activeChar, setActiveChar] = useState(0);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([
+    createInitialMessage(CHARACTERS[0]),
+  ]);
   const [input, setInput] = useState("");
-  const [progress, setProgress] = useState(3);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const char = CHARACTERS[activeChar];
+  const characterTone = CHARACTER_TONES[char.id];
+
+  const isCompleted = currentQuestionIndex >= TOTAL_QUESTION_COUNT;
+  const currentStep = Math.min(currentQuestionIndex + 1, TOTAL_QUESTION_COUNT);
+
+  const progressLabel = isCompleted
+    ? "결과 보기"
+    : `${currentStep}/${TOTAL_QUESTION_COUNT}`;
+
+  const progressPercent = (currentStep / TOTAL_QUESTION_COUNT) * 100;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -95,8 +127,20 @@ export default function Chat() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  const handleChangeCharacter = (index: number) => {
+    if (isLoading) return;
+
+    setActiveChar(index);
+
+    const hasUserMessage = messages.some((message) => message.role === "user");
+
+    if (!hasUserMessage) {
+      setMessages([createInitialMessage(CHARACTERS[index])]);
+    }
+  };
+
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isCompleted) return;
 
     const userInput = input.trim();
 
@@ -107,13 +151,38 @@ export default function Chat() {
       time: formatTime(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextQuestionIndex = currentQuestionIndex + 1;
+
+    const nextQuestion =
+      nextQuestionIndex < TOTAL_QUESTION_COUNT
+        ? PERFUME_QUESTIONS[nextQuestionIndex]
+        : null;
+
+    const updatedMessages = [...messages, userMsg];
+
+    setMessages(updatedMessages);
     setInput("");
-    setProgress((p) => Math.min(p + 1, 7));
     setIsLoading(true);
 
     try {
-      const result = await sendPerfumeChat(userInput, char.name);
+      /**
+       * 여기서 매 답변마다 백엔드로 요청을 보냄.
+       * 백엔드는 이 정보를 바탕으로 GPT 응답을 생성해야 함.
+       */
+      const result = await sendPerfumeChat({
+        userMessage: userInput,
+        characterId: char.id,
+        characterName: characterTone.name,
+        characterDescription: characterTone.description,
+        speechStyle: characterTone.speechStyle,
+        currentQuestionIndex,
+        totalQuestionCount: TOTAL_QUESTION_COUNT,
+        nextQuestion,
+        previousMessages: updatedMessages.map((message) => ({
+          role: message.role === "ai" ? "assistant" : "user",
+          content: message.text,
+        })),
+      });
 
       const aiMsg: Message = {
         id: Date.now() + 1,
@@ -123,18 +192,53 @@ export default function Chat() {
       };
 
       setMessages((prev) => [...prev, aiMsg]);
-    } catch {
+
+      if (nextQuestionIndex >= TOTAL_QUESTION_COUNT) {
+        setCurrentQuestionIndex(TOTAL_QUESTION_COUNT);
+      } else {
+        setCurrentQuestionIndex(nextQuestionIndex);
+      }
+    } catch (error) {
+      console.error("향수 채팅 API 호출 실패:", error);
+
+      /**
+       * API 실패 시에만 fallbackReplies 사용.
+       * 질문은 PERFUME_QUESTIONS의 nextQuestion을 이어붙임.
+       */
+      const fallbackText =
+        nextQuestion === null
+          ? characterTone.completedFallbackReply
+          : `${getRandomItem(characterTone.fallbackReplies)} ${nextQuestion}`;
+
       const errorMsg: Message = {
         id: Date.now() + 1,
         role: "ai",
-        text: "지금은 향을 조합하는 데 문제가 생겼어요. 잠시 후 다시 시도해 주세요.",
+        text: fallbackText,
         time: formatTime(),
       };
 
       setMessages((prev) => [...prev, errorMsg]);
+
+      if (nextQuestionIndex >= TOTAL_QUESTION_COUNT) {
+        setCurrentQuestionIndex(TOTAL_QUESTION_COUNT);
+      } else {
+        setCurrentQuestionIndex(nextQuestionIndex);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoResult = () => {
+    if (!isCompleted) return;
+
+    navigate("/result", {
+      state: {
+        character: char.id,
+        characterName: characterTone.name,
+        messages,
+      },
+    });
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -146,17 +250,15 @@ export default function Chat() {
 
   return (
     <div
-      className="flex flex-col min-h-screen"
+      className="flex min-h-screen flex-col"
       style={{ backgroundColor: "#EEF0F8" }}
     >
       <Navbar />
 
-      <div className="flex flex-1 pt-16 h-[calc(100vh-4rem)] overflow-hidden">
-        {/* ── Left: Chat area ── */}
-        <div className="flex flex-col flex-1 lg:w-3/4 min-w-0">
-          {/* Character selector tabs */}
+      <div className="flex h-[calc(100vh-4rem)] flex-1 overflow-hidden pt-16">
+        <div className="flex min-w-0 flex-1 flex-col lg:w-3/4">
           <div
-            className="flex items-center gap-2 px-6 py-3 border-b overflow-x-auto"
+            className="flex items-center gap-2 overflow-x-auto border-b px-6 py-3"
             style={{
               borderColor: "rgba(107,106,222,0.15)",
               backgroundColor: "rgba(255,255,255,0.7)",
@@ -165,9 +267,10 @@ export default function Chat() {
           >
             {CHARACTERS.map((c, i) => (
               <button
-                key={c.name}
-                onClick={() => setActiveChar(i)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap"
+                key={c.id}
+                onClick={() => handleChangeCharacter(i)}
+                disabled={isLoading}
+                className="flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
                 style={
                   activeChar === i
                     ? {
@@ -183,25 +286,26 @@ export default function Chat() {
                 }
               >
                 <div
-                  className="w-4 h-4 rounded-full"
+                  className="h-4 w-4 rounded-full"
                   style={{ background: c.grad }}
                 />
                 {c.name}
               </button>
             ))}
 
-            {/* Mobile: Scent panel toggle */}
             <button
-              className="ml-auto lg:hidden px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
-              style={{ background: "rgba(107,106,222,0.12)", color: "#6B6ADE" }}
+              className="ml-auto whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium lg:hidden"
+              style={{
+                background: "rgba(107,106,222,0.12)",
+                color: "#6B6ADE",
+              }}
               onClick={() => setDrawerOpen(true)}
             >
-              향 레시피 보기
+              분석 보기
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-6">
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -210,16 +314,15 @@ export default function Chat() {
                 }`}
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
               >
-                {/* Avatar */}
                 {msg.role === "ai" && (
                   <div
-                    className="w-9 h-9 rounded-full flex-shrink-0"
+                    className="h-9 w-9 flex-shrink-0 rounded-full"
                     style={{ background: char.grad }}
                   />
                 )}
 
                 <div
-                  className={`flex flex-col gap-1 max-w-[72%] ${
+                  className={`flex max-w-[72%] flex-col gap-1 ${
                     msg.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
@@ -253,15 +356,15 @@ export default function Chat() {
 
             {isLoading && (
               <div
-                className="flex items-end gap-3 flex-row"
+                className="flex flex-row items-end gap-3"
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
               >
                 <div
-                  className="w-9 h-9 rounded-full flex-shrink-0"
+                  className="h-9 w-9 flex-shrink-0 rounded-full"
                   style={{ background: char.grad }}
                 />
 
-                <div className="flex flex-col gap-1 max-w-[72%] items-start">
+                <div className="flex max-w-[72%] flex-col items-start gap-1">
                   <div
                     className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
                     style={{
@@ -271,7 +374,7 @@ export default function Chat() {
                       boxShadow: "0 2px 12px rgba(107,106,222,0.08)",
                     }}
                   >
-                    향을 조합하는 중이에요...
+                    {characterTone.name}가 답변을 조향하는 중이에요...
                   </div>
                 </div>
               </div>
@@ -280,18 +383,17 @@ export default function Chat() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area */}
           <div
-            className="px-6 py-4 border-t"
+            className="border-t px-6 py-4"
             style={{
               borderColor: "rgba(107,106,222,0.15)",
               backgroundColor: "rgba(255,255,255,0.8)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="flex items-center gap-3 max-w-3xl mx-auto">
+            <div className="mx-auto flex max-w-3xl items-center gap-3">
               <div
-                className="flex-1 flex items-center rounded-full px-5 py-3 transition-all duration-200"
+                className="flex flex-1 items-center rounded-full px-5 py-3 transition-all duration-200"
                 style={{
                   background: "rgba(255,255,255,0.9)",
                   border: "1.5px solid rgba(107,106,222,0.2)",
@@ -299,14 +401,16 @@ export default function Chat() {
                 }}
               >
                 <input
-                  className="flex-1 bg-transparent outline-none text-sm text-text-dark placeholder-text-gray"
+                  className="text-text-dark placeholder-text-gray flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed"
                   placeholder={
-                    isLoading
-                      ? `${char.name}가 향을 조합하고 있어요...`
-                      : `${char.name}에게 이야기해요...`
+                    isCompleted
+                      ? "모든 질문이 완료되었어요. 결과를 확인해보세요."
+                      : isLoading
+                        ? `${characterTone.name}가 향을 조합하고 있어요...`
+                        : `${characterTone.name}에게 이야기해요...`
                   }
                   value={input}
-                  disabled={isLoading}
+                  disabled={isLoading || isCompleted}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
                   onFocus={(e) => {
@@ -330,8 +434,8 @@ export default function Chat() {
 
               <button
                 onClick={sendMessage}
-                disabled={isLoading || !input.trim()}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || isCompleted || !input.trim()}
+                className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
                   boxShadow: "0 4px 16px rgba(107,106,222,0.35)",
@@ -351,20 +455,25 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* ── Right: Scent Profile panel desktop ── */}
         <aside
-          className="hidden lg:flex flex-col w-72 xl:w-80 border-l overflow-y-auto"
+          className="hidden w-72 flex-col overflow-y-auto border-l lg:flex xl:w-80"
           style={{
             borderColor: "rgba(107,106,222,0.15)",
             backgroundColor: "rgba(255,255,255,0.6)",
             backdropFilter: "blur(16px)",
           }}
         >
-          <ScentPanel progress={progress} />
+          <ScentPanel
+            currentStep={currentStep}
+            totalStep={TOTAL_QUESTION_COUNT}
+            progressLabel={progressLabel}
+            progressPercent={progressPercent}
+            isCompleted={isCompleted}
+            onResultClick={handleGoResult}
+          />
         </aside>
       </div>
 
-      {/* ── Mobile Drawer ── */}
       {drawerOpen && (
         <div
           className="fixed inset-0 z-50 lg:hidden"
@@ -372,7 +481,7 @@ export default function Chat() {
           onClick={() => setDrawerOpen(false)}
         >
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-3xl overflow-y-auto"
+            className="absolute bottom-0 left-0 right-0 overflow-y-auto rounded-t-3xl"
             style={{
               backgroundColor: "rgba(238,240,248,0.98)",
               backdropFilter: "blur(24px)",
@@ -380,12 +489,12 @@ export default function Chat() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center px-6 pt-6 pb-4">
+            <div className="flex items-center justify-between px-6 pb-4 pt-6">
               <p
-                className="text-xs font-semibold tracking-widest text-text-gray"
+                className="text-text-gray text-xs font-semibold tracking-widest"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                SCENT PROFILE
+                SCENT ANALYSIS
               </p>
 
               <button
@@ -396,7 +505,14 @@ export default function Chat() {
               </button>
             </div>
 
-            <ScentPanel progress={progress} />
+            <ScentPanel
+              currentStep={currentStep}
+              totalStep={TOTAL_QUESTION_COUNT}
+              progressLabel={progressLabel}
+              progressPercent={progressPercent}
+              isCompleted={isCompleted}
+              onResultClick={handleGoResult}
+            />
           </div>
         </div>
       )}
@@ -430,29 +546,47 @@ export default function Chat() {
   );
 }
 
-function ScentPanel({ progress }: { progress: number }) {
+type ScentPanelProps = {
+  currentStep: number;
+  totalStep: number;
+  progressLabel: string;
+  progressPercent: number;
+  isCompleted: boolean;
+  onResultClick: () => void;
+};
+
+function ScentPanel({
+  currentStep,
+  totalStep,
+  progressLabel,
+  progressPercent,
+  isCompleted,
+  onResultClick,
+}: ScentPanelProps) {
+  const safeStep = Math.min(currentStep, totalStep);
+  const hiddenScentName = hiddenScentNames[safeStep - 1] ?? "???";
+  const analysisMessage = analysisMessages[safeStep - 1] ?? analysisMessages[0];
+
   return (
-    <div className="p-6 flex flex-col gap-6">
-      {/* Header */}
+    <div className="flex min-h-full flex-col gap-6 p-6">
       <div>
         <p
-          className="text-xs font-semibold tracking-widest mb-1 text-text-gray"
+          className="text-text-gray mb-1 text-xs font-semibold tracking-widest"
           style={{
             fontFamily: "'Space Grotesk', sans-serif",
             letterSpacing: "0.12em",
           }}
         >
-          SCENT PROFILE
+          SCENT ANALYSIS
         </p>
 
-        <h2 className="font-bold text-text-dark text-lg">나의 향 레시피</h2>
+        <h2 className="text-text-dark text-lg font-bold">내 취향 분석 중</h2>
 
-        <p className="text-text-gray text-xs mt-1 leading-relaxed">
-          대화가 진행되는 동안 당신의 향이 만들어지고 있어요
+        <p className="text-text-gray mt-1 text-xs leading-relaxed">
+          완성된 향은 아직 공개하지 않고, 취향의 흐름만 조용히 정리하고 있어요.
         </p>
       </div>
 
-      {/* Orbital visualization */}
       <div className="flex flex-col items-center">
         <div className="relative" style={{ width: 160, height: 160 }}>
           <div
@@ -493,88 +627,125 @@ function ScentPanel({ progress }: { progress: number }) {
         </div>
 
         <p
-          className="text-xs text-text-gray mt-3"
+          className="text-text-gray mt-3 text-xs"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          향 입자가 모이고 있어요 ✦
+          향의 윤곽을 조합하고 있어요 ✦
         </p>
       </div>
 
-      {/* Notes */}
-      <div>
-        <p className="text-sm font-semibold text-text-dark mb-4">
-          발견된 향 노트
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          background: "rgba(255,255,255,0.72)",
+          border: "1px solid rgba(107,106,222,0.14)",
+          boxShadow: "0 10px 30px rgba(107,106,222,0.08)",
+        }}
+      >
+        <p className="text-text-gray text-xs font-medium">예상 향기명</p>
+
+        <div className="mt-3 flex items-center gap-2">
+          <span
+            className="text-3xl font-bold tracking-[0.22em]"
+            style={{
+              color: "#1A1A2E",
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}
+          >
+            {hiddenScentName}
+          </span>
+
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{
+              background: "#6B6ADE",
+              animation: "pulse-glow 2s ease-in-out infinite",
+            }}
+          />
+        </div>
+
+        <p className="text-text-gray mt-4 text-xs leading-relaxed">
+          {analysisMessage}
         </p>
-
-        {(["top", "mid", "base"] as const).map((tier) => (
-          <div key={tier} className="mb-4">
-            <p
-              className="text-xs font-semibold tracking-wider mb-2 uppercase"
-              style={{
-                color: NOTE_COLORS[tier],
-                fontFamily: "'Space Grotesk', sans-serif",
-              }}
-            >
-              {tier} note
-            </p>
-
-            {NOTES_DATA[tier].map((note) => (
-              <div key={note.name} className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-text-dark">{note.name}</span>
-                  <span style={{ color: NOTE_COLORS[tier] }}>{note.pct}%</span>
-                </div>
-
-                <div
-                  className="h-1.5 rounded-full"
-                  style={{ backgroundColor: "rgba(107,106,222,0.1)" }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${note.pct}%`,
-                      background: NOTE_COLORS[tier],
-                      animation: "bar-fill 1s ease-out",
-                      animationFillMode: "both",
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ))}
       </div>
 
-      {/* Keywords */}
       <div>
-        <p className="text-sm font-semibold text-text-dark mb-3">키워드</p>
+        <p className="text-text-dark mb-3 text-sm font-semibold">분석 상태</p>
 
-        <div className="flex flex-wrap gap-2">
-          {KEYWORDS.map((kw) => (
-            <span
-              key={kw}
-              className="px-3 py-1 rounded-full text-xs font-medium"
+        <div className="flex flex-col gap-2">
+          {["감정의 온도", "장면의 밀도", "향의 방향성"].map((item, index) => (
+            <div
+              key={item}
+              className="flex items-center justify-between rounded-xl px-4 py-3 text-xs"
               style={{
-                background: "rgba(107,106,222,0.1)",
-                color: "#6B6ADE",
-                border: "1px solid rgba(107,106,222,0.2)",
+                background: "rgba(107,106,222,0.07)",
+                border: "1px solid rgba(107,106,222,0.08)",
               }}
             >
-              {kw}
-            </span>
+              <span className="text-text-gray">{item}</span>
+              <span
+                className="font-semibold"
+                style={{
+                  color:
+                    index === 0
+                      ? "#6B6ADE"
+                      : index === 1
+                        ? "#9B89D4"
+                        : "#7EC8A4",
+                }}
+              >
+                분석 중
+              </span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Progress */}
       <div
-        className="flex items-center justify-between px-4 py-3 rounded-xl text-sm"
+        className="mt-auto rounded-2xl p-4"
         style={{ background: "rgba(107,106,222,0.08)" }}
       >
-        <span className="text-text-gray">진행 중 ...</span>
-        <span className="font-semibold" style={{ color: "#6B6ADE" }}>
-          ({progress}/7)
-        </span>
+        <div className="mb-3 flex items-center justify-between text-sm">
+          <span className="text-text-gray">진행 상태</span>
+          <span className="font-semibold" style={{ color: "#6B6ADE" }}>
+            {safeStep}/{totalStep}
+          </span>
+        </div>
+
+        <div
+          className="mb-4 h-2 overflow-hidden rounded-full"
+          style={{ background: "rgba(107,106,222,0.12)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progressPercent}%`,
+              background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
+            }}
+          />
+        </div>
+
+        <button
+          type="button"
+          disabled={!isCompleted}
+          onClick={onResultClick}
+          className="w-full rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed"
+          style={
+            isCompleted
+              ? {
+                  background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
+                  color: "white",
+                  boxShadow: "0 8px 24px rgba(107,106,222,0.28)",
+                }
+              : {
+                  background: "rgba(255,255,255,0.65)",
+                  color: "#8B8BA7",
+                  border: "1px solid rgba(107,106,222,0.12)",
+                }
+          }
+        >
+          {progressLabel}
+        </button>
       </div>
     </div>
   );
