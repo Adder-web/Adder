@@ -25,9 +25,19 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+	// OpenAI API 연결
+	implementation 'com.openai:openai-java:4.35.0'
+
+	// @Valid, @NotBlank 같은 검증 어노테이션 사용
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
