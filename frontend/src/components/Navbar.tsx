@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
+import { logout as logoutApi } from "../api/authApi";
 
 const NAV_LINKS = [
   { label: "About", to: "/about" },
@@ -10,12 +12,26 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAuthenticated, accessToken, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleLogout = async () => {
+    if (accessToken) {
+      try {
+        await logoutApi(accessToken);
+      } catch {
+        // 네트워크 오류 무시
+      }
+    }
+    logout();
+    navigate("/");
+  };
 
   return (
     <nav
@@ -49,15 +65,34 @@ export default function Navbar() {
 
       {/* Right Actions */}
       <div className="hidden md:flex items-center gap-3">
-        {/* Log In */}
-        <button className="px-4 py-2 text-sm font-medium text-text-dark rounded-full transition-colors duration-200 hover:text-primary">
-          Log In
-        </button>
-
-        {/* Sign Up */}
-        <button className="px-5 py-2 text-sm font-medium text-primary rounded-full border border-primary/30 bg-white/40 backdrop-blur-sm transition-all duration-200 hover:bg-primary/5">
-          Sign Up
-        </button>
+        {isAuthenticated ? (
+          <>
+            <span className="text-sm font-medium text-text-dark">
+              {user?.nickname}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm font-medium text-text-dark rounded-full transition-colors duration-200 hover:text-primary"
+            >
+              로그아웃
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-medium text-text-dark rounded-full transition-colors duration-200 hover:text-primary"
+            >
+              Log In
+            </Link>
+            <Link
+              to="/signup"
+              className="px-5 py-2 text-sm font-medium text-primary rounded-full border border-primary/30 bg-white/40 backdrop-blur-sm transition-all duration-200 hover:bg-primary/5"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Mobile hamburger placeholder */}

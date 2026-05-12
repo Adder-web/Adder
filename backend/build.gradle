@@ -25,12 +25,22 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
 	// OpenAI API 연결
 	implementation 'com.openai:openai-java:4.35.0'
 
 	// @Valid, @NotBlank 같은 검증 어노테이션 사용
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// H2 in-memory database (개발용)
+	runtimeOnly 'com.h2database:h2'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
