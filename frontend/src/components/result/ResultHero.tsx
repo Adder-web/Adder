@@ -36,9 +36,13 @@ export default function ResultHero({ result }: ResultHeroProps) {
           ))}
         </div>
 
-        <div className="relative mt-4 inline-flex items-center gap-3 rounded-[1.125rem] border border-[#4B3F8C]/10 bg-white/60 py-3 pl-[4.5rem] pr-4">
-          <div className="absolute left-3 top-1/2 flex h-[3.625rem] w-[3.625rem] -translate-y-1/2 items-center justify-center rounded-2xl bg-[#B5EBDC]/60 text-[1.5rem] shadow-inner">
-            🫧
+        <div className="relative mt-4 inline-flex items-center gap-3 rounded-[1.125rem] border border-[#4B3F8C]/10 bg-white/60 py-3 pl-[4.5rem] pr-4 shadow-[0_8px_24px_rgba(75,63,140,0.08)] backdrop-blur-md">
+          <div className="absolute left-3 top-1/2 flex h-[3.625rem] w-[3.625rem] -translate-y-1/2 items-center justify-center overflow-hidden rounded-2xl bg-[#B5EBDC]/60 shadow-inner">
+            <img
+              src={result.perfumer.image}
+              alt={result.perfumer.name}
+              className="h-full w-full object-contain p-1.5"
+            />
           </div>
 
           <div>
