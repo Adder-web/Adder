@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { sendPerfumeChat } from "../api/perfumeApi";
+import { sendPerfumeChat, type PerfumeMessage } from "../api/perfumeApi";
 import type { CharacterType } from "../data/perfumeQuestions";
 import { CHARACTER_TONES } from "../data/characterTone";
 
@@ -59,16 +59,6 @@ const PERFUME_QUESTIONS = [
   "그 장면의 분위기는 가볍고 산뜻한 쪽인가요, 깊고 차분한 쪽인가요?",
   "좋아하는 계절, 날씨, 색감이 있다면 함께 알려주세요.",
   "마지막으로 피하고 싶은 향이나 불편하게 느끼는 향이 있다면 알려주세요.",
-];
-
-const hiddenScentNames = ["???", "?? ?", "? ??", "???", "?? ??"];
-
-const analysisMessages = [
-  "아직 이름 붙일 수 없는 향의 첫 단서를 모으고 있어요.",
-  "답변 속 분위기가 향의 방향으로 천천히 변환되고 있어요.",
-  "취향의 결이 조금씩 겹치며 하나의 향으로 정리되고 있어요.",
-  "선호하는 무드와 감각의 흐름을 조심스럽게 분석하고 있어요.",
-  "거의 완성 단계에 가까워지고 있어요. 마지막 단서를 정리하는 중이에요.",
 ];
 
 function formatTime() {
@@ -165,10 +155,6 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      /**
-       * 여기서 매 답변마다 백엔드로 요청을 보냄.
-       * 백엔드는 이 정보를 바탕으로 GPT 응답을 생성해야 함.
-       */
       const result = await sendPerfumeChat({
         userMessage: userInput,
         characterId: char.id,
@@ -201,10 +187,6 @@ export default function Chat() {
     } catch (error) {
       console.error("향수 채팅 API 호출 실패:", error);
 
-      /**
-       * API 실패 시에만 fallbackReplies 사용.
-       * 질문은 PERFUME_QUESTIONS의 nextQuestion을 이어붙임.
-       */
       const fallbackText =
         nextQuestion === null
           ? characterTone.completedFallbackReply
@@ -232,11 +214,21 @@ export default function Chat() {
   const handleGoResult = () => {
     if (!isCompleted) return;
 
+    const resultMessages: PerfumeMessage[] = messages.map((message) => ({
+      role: message.role === "ai" ? "assistant" : "user",
+      content: message.text,
+    }));
+
+    sessionStorage.setItem("adder-character-type", char.id);
+    sessionStorage.setItem(
+      "adder-chat-messages",
+      JSON.stringify(resultMessages),
+    );
+
     navigate("/result", {
       state: {
-        character: char.id,
-        characterName: characterTone.name,
-        messages,
+        characterType: char.id,
+        messages: resultMessages,
       },
     });
   };
@@ -250,15 +242,15 @@ export default function Chat() {
 
   return (
     <div
-      className="flex min-h-screen flex-col"
+      className="flex h-dvh overflow-hidden flex-col"
       style={{ backgroundColor: "#EEF0F8" }}
     >
       <Navbar />
 
-      <div className="flex h-[calc(100vh-4rem)] flex-1 overflow-hidden pt-16">
-        <div className="flex min-w-0 flex-1 flex-col lg:w-3/4">
+      <main className="flex min-h-0 flex-1 overflow-hidden pt-16">
+        <section className="flex min-w-0 min-h-0 flex-1 flex-col lg:w-3/4">
           <div
-            className="flex items-center gap-2 overflow-x-auto border-b px-6 py-3"
+            className="flex shrink-0 items-center gap-2 overflow-x-auto border-b px-4 py-2.5 sm:px-6 sm:py-3"
             style={{
               borderColor: "rgba(107,106,222,0.15)",
               backgroundColor: "rgba(255,255,255,0.7)",
@@ -270,7 +262,7 @@ export default function Chat() {
                 key={c.id}
                 onClick={() => handleChangeCharacter(i)}
                 disabled={isLoading}
-                className="flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
                 style={
                   activeChar === i
                     ? {
@@ -286,7 +278,7 @@ export default function Chat() {
                 }
               >
                 <div
-                  className="h-4 w-4 rounded-full"
+                  className="h-3.5 w-3.5 rounded-full sm:h-4 sm:w-4"
                   style={{ background: c.grad }}
                 />
                 {c.name}
@@ -294,7 +286,7 @@ export default function Chat() {
             ))}
 
             <button
-              className="ml-auto whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium lg:hidden"
+              className="ml-auto whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm lg:hidden"
               style={{
                 background: "rgba(107,106,222,0.12)",
                 color: "#6B6ADE",
@@ -305,29 +297,29 @@ export default function Chat() {
             </button>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-6">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-6">
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex items-end gap-3 ${
+                className={`flex items-end gap-2.5 sm:gap-3 ${
                   msg.role === "user" ? "flex-row-reverse" : "flex-row"
                 }`}
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
               >
                 {msg.role === "ai" && (
                   <div
-                    className="h-9 w-9 flex-shrink-0 rounded-full"
+                    className="h-8 w-8 flex-shrink-0 rounded-full sm:h-9 sm:w-9"
                     style={{ background: char.grad }}
                   />
                 )}
 
                 <div
-                  className={`flex max-w-[72%] flex-col gap-1 ${
+                  className={`flex max-w-[82%] flex-col gap-1 sm:max-w-[72%] ${
                     msg.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
                   <div
-                    className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
+                    className="rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:px-4 sm:py-3"
                     style={
                       msg.role === "user"
                         ? {
@@ -356,17 +348,17 @@ export default function Chat() {
 
             {isLoading && (
               <div
-                className="flex flex-row items-end gap-3"
+                className="flex flex-row items-end gap-2.5 sm:gap-3"
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
               >
                 <div
-                  className="h-9 w-9 flex-shrink-0 rounded-full"
+                  className="h-8 w-8 flex-shrink-0 rounded-full sm:h-9 sm:w-9"
                   style={{ background: char.grad }}
                 />
 
-                <div className="flex max-w-[72%] flex-col items-start gap-1">
+                <div className="flex max-w-[82%] flex-col items-start gap-1 sm:max-w-[72%]">
                   <div
-                    className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
+                    className="rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:px-4 sm:py-3"
                     style={{
                       background: "rgba(255,255,255,0.9)",
                       color: "#1A1A2E",
@@ -384,16 +376,16 @@ export default function Chat() {
           </div>
 
           <div
-            className="border-t px-6 py-4"
+            className="shrink-0 border-t px-4 py-3 sm:px-6 sm:py-4"
             style={{
               borderColor: "rgba(107,106,222,0.15)",
               backgroundColor: "rgba(255,255,255,0.8)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <div className="mx-auto flex max-w-3xl items-center gap-2.5 sm:gap-3">
               <div
-                className="flex flex-1 items-center rounded-full px-5 py-3 transition-all duration-200"
+                className="flex flex-1 items-center rounded-full px-4 py-2.5 transition-all duration-200 sm:px-5 sm:py-3"
                 style={{
                   background: "rgba(255,255,255,0.9)",
                   border: "1.5px solid rgba(107,106,222,0.2)",
@@ -435,7 +427,7 @@ export default function Chat() {
               <button
                 onClick={sendMessage}
                 disabled={isLoading || isCompleted || !input.trim()}
-                className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11"
                 style={{
                   background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
                   boxShadow: "0 4px 16px rgba(107,106,222,0.35)",
@@ -453,10 +445,10 @@ export default function Chat() {
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         <aside
-          className="hidden w-72 flex-col overflow-y-auto border-l lg:flex xl:w-80"
+          className="hidden w-[300px] shrink-0 flex-col overflow-hidden border-l xl:w-[340px] lg:flex"
           style={{
             borderColor: "rgba(107,106,222,0.15)",
             backgroundColor: "rgba(255,255,255,0.6)",
@@ -472,7 +464,7 @@ export default function Chat() {
             onResultClick={handleGoResult}
           />
         </aside>
-      </div>
+      </main>
 
       {drawerOpen && (
         <div
@@ -485,7 +477,7 @@ export default function Chat() {
             style={{
               backgroundColor: "rgba(238,240,248,0.98)",
               backdropFilter: "blur(24px)",
-              maxHeight: "80vh",
+              maxHeight: "80dvh",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -564,35 +556,35 @@ function ScentPanel({
   onResultClick,
 }: ScentPanelProps) {
   const safeStep = Math.min(currentStep, totalStep);
-  const hiddenScentName = hiddenScentNames[safeStep - 1] ?? "???";
-  const analysisMessage = analysisMessages[safeStep - 1] ?? analysisMessages[0];
 
   return (
-    <div className="flex min-h-full flex-col gap-6 p-6">
-      <div>
+    <div className="flex h-full min-h-0 flex-col px-4 py-4 xl:px-5 xl:py-5">
+      <div className="shrink-0">
         <p
-          className="text-text-gray mb-1 text-xs font-semibold tracking-widest"
+          className="mb-1 text-[10px] font-semibold tracking-[0.16em]"
           style={{
+            color: "#8B8BA7",
             fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: "0.12em",
           }}
         >
           SCENT ANALYSIS
         </p>
 
-        <h2 className="text-text-dark text-lg font-bold">내 취향 분석 중</h2>
+        <h2 className="text-[15px] font-bold leading-snug text-[#1A1A2E] xl:text-base">
+          내 취향 분석 중
+        </h2>
 
-        <p className="text-text-gray mt-1 text-xs leading-relaxed">
+        <p className="mt-1.5 text-[11px] leading-[1.55] text-[#8B8BA7]">
           완성된 향은 아직 공개하지 않고, 취향의 흐름만 조용히 정리하고 있어요.
         </p>
       </div>
 
-      <div className="flex flex-col items-center">
-        <div className="relative" style={{ width: 160, height: 160 }}>
+      <div className="flex shrink-0 flex-col items-center py-4 xl:py-5">
+        <div className="relative h-28 w-28 xl:h-32 xl:w-32">
           <div
             className="absolute inset-0 rounded-full"
             style={{
-              border: "2px solid rgba(107,106,222,0.2)",
+              border: "1.5px solid rgba(107,106,222,0.2)",
               animation: "orbit 12s linear infinite",
             }}
           />
@@ -600,8 +592,8 @@ function ScentPanel({
           <div
             className="absolute rounded-full"
             style={{
-              inset: 20,
-              border: "2px solid rgba(155,137,212,0.3)",
+              inset: "13%",
+              border: "1.5px solid rgba(155,137,212,0.28)",
               animation: "orbit-reverse 8s linear infinite",
             }}
           />
@@ -609,8 +601,8 @@ function ScentPanel({
           <div
             className="absolute rounded-full"
             style={{
-              inset: 40,
-              border: "2px solid rgba(126,200,164,0.4)",
+              inset: "27%",
+              border: "1.5px solid rgba(126,200,164,0.36)",
               animation: "orbit 5s linear infinite",
             }}
           />
@@ -618,73 +610,98 @@ function ScentPanel({
           <div
             className="absolute rounded-full"
             style={{
-              inset: 60,
+              inset: "39%",
               background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
-              filter: "blur(2px)",
+              filter: "blur(1.5px)",
               animation: "pulse-glow 3s ease-in-out infinite",
             }}
           />
         </div>
 
         <p
-          className="text-text-gray mt-3 text-xs"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          className="mt-2 text-center text-[10px] leading-relaxed"
+          style={{
+            color: "#8B8BA7",
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}
         >
           향의 윤곽을 조합하고 있어요 ✦
         </p>
       </div>
 
       <div
-        className="rounded-2xl p-5"
+        className="shrink-0 rounded-[20px] px-4 py-4"
         style={{
-          background: "rgba(255,255,255,0.72)",
-          border: "1px solid rgba(107,106,222,0.14)",
-          boxShadow: "0 10px 30px rgba(107,106,222,0.08)",
+          background: "rgba(255,255,255,0.88)",
+          border: "1px solid rgba(107,106,222,0.12)",
+          boxShadow: "0 8px 24px rgba(107,106,222,0.05)",
         }}
       >
-        <p className="text-text-gray text-xs font-medium">예상 향기명</p>
+        <p
+          className="text-[10px] font-semibold tracking-[0.16em]"
+          style={{
+            color: "#9A99B5",
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}
+        >
+          SCENT NAME
+        </p>
 
-        <div className="mt-3 flex items-center gap-2">
-          <span
-            className="text-3xl font-bold tracking-[0.22em]"
+        <div className="mt-3 flex items-center gap-3">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
             style={{
-              color: "#1A1A2E",
-              fontFamily: "'Space Grotesk', sans-serif",
+              background: "rgba(107,106,222,0.08)",
             }}
           >
-            {hiddenScentName}
-          </span>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M8 10V7.8C8 5.70132 9.79086 4 12 4C14.2091 4 16 5.70132 16 7.8V10"
+                stroke="#6B6ADE"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <rect
+                x="6"
+                y="10"
+                width="12"
+                height="10"
+                rx="2.5"
+                stroke="#6B6ADE"
+                strokeWidth="1.8"
+              />
+            </svg>
+          </div>
 
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{
-              background: "#6B6ADE",
-              animation: "pulse-glow 2s ease-in-out infinite",
-            }}
-          />
+          <div>
+            <h3 className="text-[14px] font-bold text-[#1A1A2E]">
+              예상 향기명
+            </h3>
+
+            <p className="mt-1 text-[11px] leading-[1.5] text-[#8B8BA7]">
+              결과 페이지에서 공개돼요.
+            </p>
+          </div>
         </div>
-
-        <p className="text-text-gray mt-4 text-xs leading-relaxed">
-          {analysisMessage}
-        </p>
       </div>
 
-      <div>
-        <p className="text-text-dark mb-3 text-sm font-semibold">분석 상태</p>
+      <div className="mt-4 shrink-0">
+        <p className="mb-2 text-[13px] font-bold text-[#1A1A2E]">분석 상태</p>
 
         <div className="flex flex-col gap-2">
           {["감정의 온도", "장면의 밀도", "향의 방향성"].map((item, index) => (
             <div
               key={item}
-              className="flex items-center justify-between rounded-xl px-4 py-3 text-xs"
+              className="flex items-center justify-between rounded-xl px-3 py-2"
               style={{
                 background: "rgba(107,106,222,0.07)",
                 border: "1px solid rgba(107,106,222,0.08)",
               }}
             >
-              <span className="text-text-gray">{item}</span>
+              <span className="text-[11px] text-[#8B8BA7]">{item}</span>
+
               <span
-                className="font-semibold"
+                className="text-[11px] font-semibold"
                 style={{
                   color:
                     index === 0
@@ -702,18 +719,18 @@ function ScentPanel({
       </div>
 
       <div
-        className="mt-auto rounded-2xl p-4"
+        className="mt-auto shrink-0 rounded-2xl p-3"
         style={{ background: "rgba(107,106,222,0.08)" }}
       >
-        <div className="mb-3 flex items-center justify-between text-sm">
-          <span className="text-text-gray">진행 상태</span>
-          <span className="font-semibold" style={{ color: "#6B6ADE" }}>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[11px] text-[#8B8BA7]">진행 상태</span>
+          <span className="text-xs font-semibold" style={{ color: "#6B6ADE" }}>
             {safeStep}/{totalStep}
           </span>
         </div>
 
         <div
-          className="mb-4 h-2 overflow-hidden rounded-full"
+          className="mb-3 h-1.5 overflow-hidden rounded-full"
           style={{ background: "rgba(107,106,222,0.12)" }}
         >
           <div
@@ -729,7 +746,7 @@ function ScentPanel({
           type="button"
           disabled={!isCompleted}
           onClick={onResultClick}
-          className="w-full rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed"
+          className="w-full rounded-full px-4 py-2.5 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed"
           style={
             isCompleted
               ? {
@@ -738,7 +755,7 @@ function ScentPanel({
                   boxShadow: "0 8px 24px rgba(107,106,222,0.28)",
                 }
               : {
-                  background: "rgba(255,255,255,0.65)",
+                  background: "rgba(255,255,255,0.72)",
                   color: "#8B8BA7",
                   border: "1px solid rgba(107,106,222,0.12)",
                 }
