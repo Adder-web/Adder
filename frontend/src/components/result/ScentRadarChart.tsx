@@ -1,4 +1,4 @@
-import type { ScentBalance } from "../../data/scentResultData";
+import type { ScentBalance } from "../../api/perfumeApi";
 
 type ScentRadarChartProps = {
   data: ScentBalance[];

@@ -1,9 +1,7 @@
-import type { scentResultData } from "../../data/scentResultData";
-
-type ResultData = typeof scentResultData;
+import type { ScentResultData } from "../../data/scentResultData";
 
 type ResultHeroProps = {
-  result: ResultData;
+  result: ScentResultData;
 };
 
 export default function ResultHero({ result }: ResultHeroProps) {

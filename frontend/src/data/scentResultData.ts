@@ -1,25 +1,39 @@
+import type { CharacterType } from "./perfumeQuestions";
+import type { PerfumeResultResponse } from "../api/perfumeApi";
+
+import AlgoImage from "../assets/character/Algo.png";
 import HomaImage from "../assets/character/Homa.png";
-// import AlgoImage from "../assets/character/Algo.png";
-// import OrionImage from "../assets/character/Orion.png";
-// import MoveImage from "../assets/character/Move.png";
+import MoveImage from "../assets/character/Move.png";
+import OrionImage from "../assets/character/Orion.png";
 
-export type NoteType = "Top Note" | "Middle Note" | "Base Note";
-
-export type ScentNote = {
-  type: NoteType;
-  name: string;
-  description: string;
-  ratio: number;
-  color: "mint" | "purple" | "yellow";
+export type ScentResultData = PerfumeResultResponse & {
+  perfumer: PerfumeResultResponse["perfumer"] & {
+    image: string;
+  };
 };
 
-export type ScentBalance = {
-  label: string;
-  value: number;
+export const characterImageMap: Record<CharacterType, string> = {
+  algo: AlgoImage,
+  homa: HomaImage,
+  move: MoveImage,
+  orion: OrionImage,
 };
 
-export const scentResultData = {
+export function withCharacterImage(
+  result: PerfumeResultResponse,
+): ScentResultData {
+  return {
+    ...result,
+    perfumer: {
+      ...result.perfumer,
+      image: characterImageMap[result.characterType] ?? HomaImage,
+    },
+  };
+}
+
+export const scentResultData: ScentResultData = {
   date: "2025.03.14",
+  characterType: "homa",
 
   englishName: "Rainy Library",
   koreanName: "비 오는 날의 서재",
@@ -57,7 +71,7 @@ export const scentResultData = {
       ratio: 48,
       color: "yellow",
     },
-  ] as ScentNote[],
+  ],
 
   balance: [
     { label: "우디", value: 86 },
@@ -65,7 +79,7 @@ export const scentResultData = {
     { label: "스위트", value: 56 },
     { label: "플로럴", value: 45 },
     { label: "머스키", value: 74 },
-  ] as ScentBalance[],
+  ],
 
   keywords: [
     "고요함",

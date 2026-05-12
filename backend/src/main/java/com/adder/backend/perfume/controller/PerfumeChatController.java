@@ -2,6 +2,8 @@ package com.adder.backend.perfume.controller;
 
 import com.adder.backend.perfume.dto.PerfumeChatRequest;
 import com.adder.backend.perfume.dto.PerfumeChatResponse;
+import com.adder.backend.perfume.dto.PerfumeResultRequest;
+import com.adder.backend.perfume.dto.PerfumeResultResponse;
 import com.adder.backend.perfume.service.PerfumeChatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,5 +24,13 @@ public class PerfumeChatController {
     ) {
         String answer = perfumeChatService.createReply(request);
         return ResponseEntity.ok(new PerfumeChatResponse(answer));
+    }
+
+    @PostMapping("/result")
+    public ResponseEntity<PerfumeResultResponse> result(
+            @RequestBody PerfumeResultRequest request
+    ) {
+        PerfumeResultResponse result = perfumeChatService.createResult(request);
+        return ResponseEntity.ok(result);
     }
 }

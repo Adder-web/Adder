@@ -1,10 +1,9 @@
-import type { scentResultData, ScentNote } from "../../data/scentResultData";
+import type { ScentNote } from "../../api/perfumeApi";
+import type { ScentResultData } from "../../data/scentResultData";
 import ScentRadarChart from "./ScentRadarChart";
 
-type ResultData = typeof scentResultData;
-
 type RecipeSectionProps = {
-  result: ResultData;
+  result: ScentResultData;
 };
 
 const noteStyle: Record<
@@ -75,8 +74,9 @@ export default function RecipeSection({ result }: RecipeSectionProps) {
           </h3>
 
           <p className="mt-4 text-[0.875rem] leading-[1.6] text-[#4B5563]">
-            호마와 나눈 대화 속 기억과 감정을 바탕으로 설계된 향 노트예요.
-            <br />각 비율은 호마의 해석에 따라 달라져요.
+            {result.perfumer.name}와 나눈 대화 속 기억과 감정을 바탕으로 설계된
+            향 노트예요.
+            <br />각 비율은 {result.perfumer.name}의 해석에 따라 달라져요.
           </p>
 
           <div className="mt-8 space-y-6">

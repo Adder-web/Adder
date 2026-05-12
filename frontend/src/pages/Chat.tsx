@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { sendPerfumeChat } from "../api/perfumeApi";
+import { sendPerfumeChat, type PerfumeMessage } from "../api/perfumeApi";
 import type { CharacterType } from "../data/perfumeQuestions";
 import { CHARACTER_TONES } from "../data/characterTone";
 
@@ -214,11 +214,21 @@ export default function Chat() {
   const handleGoResult = () => {
     if (!isCompleted) return;
 
+    const resultMessages: PerfumeMessage[] = messages.map((message) => ({
+      role: message.role === "ai" ? "assistant" : "user",
+      content: message.text,
+    }));
+
+    sessionStorage.setItem("adder-character-type", char.id);
+    sessionStorage.setItem(
+      "adder-chat-messages",
+      JSON.stringify(resultMessages),
+    );
+
     navigate("/result", {
       state: {
-        character: char.id,
-        characterName: characterTone.name,
-        messages,
+        characterType: char.id,
+        messages: resultMessages,
       },
     });
   };
