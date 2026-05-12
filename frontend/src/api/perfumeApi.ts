@@ -47,6 +47,7 @@ export type ScentBalance = {
 };
 
 export type PerfumeResultResponse = {
+  resultId?: number;
   date: string;
   characterType: CharacterType;
   englishName: string;

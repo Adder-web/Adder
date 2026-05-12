@@ -67,6 +67,7 @@ export default function SignupPage() {
         agreeAiData: terms.aiData,
       });
       if (res.success) {
+        console.log("[Signup] 회원가입 성공:", res.data.nickname);
         login(res.data.accessToken, {
           userId: res.data.userId,
           nickname: res.data.nickname,

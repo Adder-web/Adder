@@ -11,6 +11,7 @@ out/
 # env
 .env
 .env.*
+src/main/resources/application.properties
 
 # IDE
 .idea/

@@ -4,9 +4,11 @@ import logo from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext";
 import { logout as logoutApi } from "../api/authApi";
 
-const NAV_LINKS = [
+const PUBLIC_NAV_LINKS = [
   { label: "About", to: "/about" },
   { label: "AI Chat", to: "/chat" },
+];
+const AUTH_NAV_LINKS = [
   { label: "MyPage", to: "/mypage" },
 ];
 
@@ -48,7 +50,7 @@ export default function Navbar() {
 
       {/* Center Nav */}
       <div className="hidden md:flex items-center gap-8">
-        {NAV_LINKS.map(({ label, to }) => (
+        {[...PUBLIC_NAV_LINKS, ...(isAuthenticated ? AUTH_NAV_LINKS : [])].map(({ label, to }) => (
           <NavLink
             key={label}
             to={to}

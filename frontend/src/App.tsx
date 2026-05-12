@@ -3,9 +3,11 @@ import Home from "./pages/Home";
 import Chat from "./pages/Chat";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import MyPage from "./pages/MyPage";
 import CustomCursor from "./components/CustomCursor";
 import { AuthProvider } from "./context/AuthContext";
 import ScentResultPage from "./pages/ScentResult";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/result" element={<ScentResultPage />} />
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
         </Routes>

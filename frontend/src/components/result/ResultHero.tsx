@@ -1,10 +1,36 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { ScentResultData } from "../../data/scentResultData";
+import { useAuth } from "../../context/AuthContext";
+import { savePerfume } from "../../api/myPerfumeApi";
 
 type ResultHeroProps = {
   result: ScentResultData;
 };
 
 export default function ResultHero({ result }: ResultHeroProps) {
+  const { isAuthenticated, accessToken } = useAuth();
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    if (!result.resultId || !accessToken || saved) return;
+    setSaving(true);
+    try {
+      const res = await savePerfume(accessToken, result.resultId);
+      if (res.success) {
+        setSaved(true);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <section className="relative grid min-h-[43.875rem] grid-cols-1 items-start gap-12 px-4 pb-16 pt-14 sm:px-8 lg:grid-cols-[1fr_34rem] lg:px-12 lg:pt-16">
       {" "}
@@ -58,9 +84,11 @@ export default function ResultHero({ result }: ResultHeroProps) {
         <div className="mt-6 flex flex-wrap gap-2.5">
           <button
             type="button"
-            className="rounded-full bg-gradient-to-b from-[#B8AEFF] to-[#8B7DEB] px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-[0_8px_22px_rgba(139,125,235,0.35),inset_0_1px_0_1px_rgba(255,255,255,0.4)]"
+            onClick={handleSave}
+            disabled={saving || saved || !result.resultId}
+            className="rounded-full bg-gradient-to-b from-[#B8AEFF] to-[#8B7DEB] px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-[0_8px_22px_rgba(139,125,235,0.35),inset_0_1px_0_1px_rgba(255,255,255,0.4)] disabled:opacity-60 transition-all hover:from-[#A89CFF] hover:to-[#7565E5]"
           >
-            향 저장하기 ↓
+            {saved ? "저장됨 ✓" : saving ? "저장 중..." : "향 저장하기 ↓"}
           </button>
 
           <button
