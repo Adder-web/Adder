@@ -4,6 +4,7 @@ import java.util.List;
 
 public class PerfumeResultResponse {
 
+    private Long resultId;
     private String date;
     private String characterType;
     private String englishName;
@@ -14,6 +15,14 @@ public class PerfumeResultResponse {
     private List<ScentNote> notes;
     private List<ScentBalance> balance;
     private List<String> keywords;
+
+    public Long getResultId() {
+        return resultId;
+    }
+
+    public void setResultId(Long resultId) {
+        this.resultId = resultId;
+    }
 
     public String getDate() {
         return date;

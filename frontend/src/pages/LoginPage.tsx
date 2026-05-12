@@ -52,6 +52,7 @@ export default function LoginPage() {
     try {
       const res = await emailLogin(email, password);
       if (res.success) {
+        console.log("[Login] 이메일 로그인 성공:", res.data.nickname);
         login(res.data.accessToken, {
           userId: res.data.userId,
           nickname: res.data.nickname,
@@ -87,6 +88,7 @@ export default function LoginPage() {
         try {
           const res = await socialLogin("google", tokenResponse.access_token);
           if (res.success) {
+            console.log("[Login] Google 로그인 성공:", res.data.nickname);
             login(res.data.accessToken, {
               userId: res.data.userId,
               nickname: res.data.nickname,
@@ -260,6 +262,15 @@ export default function LoginPage() {
               회원가입
             </Link>
           </p>
+
+          <div className="mt-3 text-center">
+            <Link
+              to="/"
+              className="text-xs text-text-gray hover:text-primary transition"
+            >
+              비회원으로 이용하기 →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
