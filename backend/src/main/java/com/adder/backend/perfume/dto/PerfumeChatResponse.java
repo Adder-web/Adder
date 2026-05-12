@@ -1,11 +1,14 @@
 package com.adder.backend.perfume.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
 public class PerfumeChatResponse {
 
     private String answer;
+
+    public PerfumeChatResponse(String answer) {
+        this.answer = answer;
+    }
+
+    public String getAnswer() {
+        return answer;
+    }
 }
