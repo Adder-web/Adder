@@ -16,8 +16,9 @@ import java.util.Map;
 
 @Service
 public class PerfumeChatService {
-private final RestClient restClient;
-private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${openai.api.key}")
     private String openAiApiKey;
@@ -25,11 +26,11 @@ private final ObjectMapper objectMapper = new ObjectMapper();
     @Value("${openai.model:gpt-4o-mini}")
     private String openAiModel;
 
-public PerfumeChatService(RestClient.Builder restClientBuilder) {
-    this.restClient = restClientBuilder
-            .baseUrl("https://api.openai.com/v1")
-            .build();
-}
+    public PerfumeChatService(RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder
+                .baseUrl("https://api.openai.com/v1")
+                .build();
+    }
 
     public String createReply(PerfumeChatRequest request) {
         String systemPrompt = createSystemPrompt(request);
@@ -145,6 +146,15 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 result.setDate(today);
             }
 
+            PerfumeResultResponse.Perfumer perfumer = new PerfumeResultResponse.Perfumer();
+            perfumer.setName(getPerfumerName(characterType));
+            perfumer.setRole(getPerfumerRole(characterType));
+            result.setPerfumer(perfumer);
+
+            if (result.getSummary() != null && !result.getSummary().isBlank()) {
+                result.setSummary(fixPerfumerNameInSummary(result.getSummary(), characterType));
+            }
+
             return result;
         } catch (Exception e) {
             return createFallbackResult(today, characterType);
@@ -193,6 +203,8 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 10. 향료명이나 노트명을 과하게 직접적으로 나열하지 않는다.
                 11. 분석 중인 느낌은 줄 수 있지만, 결과를 미리 확정하지 않는다.
                 12. 질문이 모두 끝났다면 추가 질문을 하지 말고, 결과 화면에서 완성된 향을 확인할 수 있다고 안내한다.
+                13. 마지막 질문이 '빼고 싶은 향/피하고 싶은 향'에 대한 답변이라면, 사용자가 말한 향을 포함할 것처럼 말하지 않는다.
+                14. 마지막 질문에서는 그 향을 제외하는 선택이 향의 방향을 더 선명하게 만든다는 식으로 긍정적으로 공감한다.
 
                 금지 표현:
                 - "최종 향수명은"
@@ -200,10 +212,16 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 - "완성된 향은"
                 - "결과는"
                 - "정답은"
+                - 마지막 질문에서 "그 향을 살려볼게요"
+                - 마지막 질문에서 "그 향을 중심에 둘게요"
+                - 마지막 질문에서 "그 향이 잘 어울려요"
+                - 마지막 질문에서 "그 향을 더해볼게요"
+                - 마지막 질문에서 "그 향을 포함해볼게요"
 
                 좋은 답변 예시:
                 - "그 장면은 꽤 부드럽고 선명하게 느껴져요. 아직 이름 붙이긴 이르지만, 향의 방향이 조금씩 잡히고 있어요. 그 향을 떠올렸을 때 가장 먼저 생각나는 장소는 어디인가요?"
                 - "좋아요, 그 감정은 향으로 바꿨을 때 은은한 중심이 될 수 있어요. 조금 더 선명하게 보기 위해, 그 순간의 공기나 장소를 떠올려볼까요?"
+                - "좋아요, 그 향을 덜어내는 건 전체 분위기를 더 맑고 선명하게 만드는 좋은 선택이에요. 그 부분은 비워두고, 지금까지의 답변을 바탕으로 향의 균형을 정리해볼게요. 이제 결과에서 완성된 향을 확인해볼 수 있어요."
                 """.formatted(characterName, characterDescription, speechStyle);
     }
 
@@ -221,14 +239,48 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
 
         String progress = (currentQuestionIndex + 1) + "/" + totalQuestionCount;
 
+        boolean isLastQuestion = currentQuestionIndex + 1 >= totalQuestionCount;
+
         String previousMessages = buildPreviousMessagesText(request.getPreviousMessages());
 
         String nextQuestionText = nextQuestion == null || nextQuestion.isBlank()
                 ? "모든 질문이 끝났습니다. 추가 질문 없이 결과 화면으로 이동할 수 있도록 짧게 마무리해주세요."
                 : nextQuestion;
 
+        String situationGuide = isLastQuestion
+                ? """
+                현재 질문은 마지막 질문이다.
+                마지막 질문의 목적은 사용자가 '넣고 싶은 향'이 아니라 '빼고 싶은 향/피하고 싶은 향/선호하지 않는 향'을 말하도록 하는 것이다.
+
+                마지막 질문 응답 규칙:
+                - 사용자의 이번 답변을 '추가할 향'이 아니라 '제외할 향'으로 해석한다.
+                - 사용자가 말한 향을 포함할 것처럼 말하지 않는다.
+                - "그 향을 살려볼게요", "그 향을 중심에 둘게요", "그 향이 잘 어울려요", "그 향을 더해볼게요", "그 향을 포함해볼게요" 같은 표현을 쓰지 않는다.
+                - 사용자가 피하고 싶은 향을 알려준 것은 좋은 선택이라는 느낌으로 공감한다.
+                - 해당 향을 덜어내면 전체 향이 더 선명해지거나, 부담스럽지 않아지거나, 사용자의 취향에 더 가까워진다는 식으로 말한다.
+                - 마지막이므로 추가 질문을 하지 않는다.
+                - 결과 화면에서 완성된 향을 확인할 수 있다고 자연스럽게 안내한다.
+
+                마지막 질문 좋은 답변 예시:
+                - "좋아요, 그 향을 덜어내는 건 전체 분위기를 더 맑고 선명하게 만드는 좋은 선택이에요. 그 부분은 비워두고, 지금까지의 답변을 바탕으로 향의 균형을 정리해볼게요. 이제 결과에서 완성된 향을 확인해볼 수 있어요."
+                - "그 향을 피하고 싶다고 알려준 건 아주 좋아요. 덕분에 향이 과하게 무거워지지 않도록 더 담백한 방향으로 정리할 수 있어요. 이제 결과에서 완성된 향을 확인해볼 수 있어요."
+                - "좋아요, 그 부분을 빼두면 향이 훨씬 더 편안하고 자연스럽게 느껴질 수 있어요. 지금까지의 취향을 바탕으로 균형을 맞춰볼게요. 이제 결과에서 완성된 향을 확인해볼 수 있어요."
+                """
+                : """
+                현재 질문은 일반 취향 탐색 질문이다.
+
+                일반 질문 응답 규칙:
+                - 사용자의 이번 답변을 먼저 1~2문장으로 공감하거나 해석한다.
+                - 그 다음 다음 질문을 자연스럽게 이어간다.
+                - 사용자가 말한 감정, 장소, 분위기를 향의 방향성으로 부드럽게 연결한다.
+                - 아직 최종 결과를 확정하지 않는다.
+                """;
+
         return """
                 현재 진행도:
+                %s
+
+                마지막 질문 여부:
                 %s
 
                 사용자의 이번 답변:
@@ -240,13 +292,23 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 이전 대화:
                 %s
 
-                작성 방식:
-                - 사용자의 이번 답변을 먼저 1~2문장으로 공감하거나 해석한다.
-                - 그 다음 다음 질문을 자연스럽게 이어간다.
+                상황별 작성 규칙:
+                %s
+
+                공통 작성 방식:
                 - 캐릭터 말투를 반드시 반영한다.
                 - 너무 길게 설명하지 않는다.
+                - 답변은 2~4문장 정도로 작성한다.
                 - 완성된 향기명이나 최종 결과는 공개하지 않는다.
-                """.formatted(progress, userMessage, nextQuestionText, previousMessages);
+                - 사용자의 취향을 너무 단정하지 않는다.
+                """.formatted(
+                progress,
+                isLastQuestion ? "true" : "false",
+                userMessage,
+                nextQuestionText,
+                previousMessages,
+                situationGuide
+        );
     }
 
     private String createResultSystemPrompt() {
@@ -306,6 +368,8 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 17. keywords는 한국어 단어 6개 이상 8개 이하로 작성한다.
                 18. 향료명은 너무 전문적으로만 쓰지 말고 사용자의 기억과 연결되는 단어를 섞어라.
                 19. 결과는 너무 과장하지 말고, 차분하고 세련된 톤으로 작성한다.
+                20. 마지막 대화에서 사용자가 '빼고 싶은 향/피하고 싶은 향'으로 말한 향은 중심 노트로 넣지 않는다.
+                21. 사용자가 피하고 싶다고 말한 향은 notes.name에 그대로 넣지 않는다.
 
                 [반드시 아래 JSON 구조와 key를 그대로 사용]
                 {
@@ -313,7 +377,7 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                   "characterType": "%s",
                   "englishName": "Rainy Library",
                   "koreanName": "비 오는 날의 서재",
-                  "summary": "우디 · 페트리코르 · 바닐라 — 편안하고 감성적인 향\\n호마가 당신의 기억을 따라 조향했어요",
+                  "summary": "우디 · 페트리코르 · 바닐라 — 편안하고 감성적인 향\\n%s가 당신의 기억을 따라 조향했어요",
                   "moods": ["편안함", "감성적", "고요함"],
                   "perfumer": {
                     "name": "%s",
@@ -362,6 +426,7 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
                 perfumerRole,
                 today,
                 characterType,
+                perfumerName,
                 perfumerName,
                 perfumerRole
         );
@@ -521,6 +586,20 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
     private String createFallbackReply(PerfumeChatRequest request) {
         String nextQuestion = request.getNextQuestion();
 
+        int currentQuestionIndex = request.getCurrentQuestionIndex() == null
+                ? 0
+                : request.getCurrentQuestionIndex();
+
+        int totalQuestionCount = request.getTotalQuestionCount() == null
+                ? 5
+                : request.getTotalQuestionCount();
+
+        boolean isLastQuestion = currentQuestionIndex + 1 >= totalQuestionCount;
+
+        if (isLastQuestion) {
+            return "좋아요. 그 향을 덜어내는 건 전체 분위기를 더 편안하고 선명하게 만드는 좋은 선택이에요. 그 부분은 비워두고, 지금까지의 답변을 바탕으로 향의 균형을 정리해볼게요. 이제 결과에서 완성된 향을 확인해볼 수 있어요.";
+        }
+
         if (nextQuestion == null || nextQuestion.isBlank()) {
             return "좋아요. 지금까지의 답변만으로도 향의 방향이 조금씩 선명해졌어요. 이제 결과에서 완성된 향을 확인해볼 수 있어요.";
         }
@@ -559,6 +638,16 @@ public PerfumeChatService(RestClient.Builder restClientBuilder) {
             case "homa" -> "Curiosity Perfumer";
             default -> "Curiosity Perfumer";
         };
+    }
+
+    private String fixPerfumerNameInSummary(String summary, String characterType) {
+        String correctPerfumerName = getPerfumerName(characterType);
+
+        return summary
+                .replace("호마가 당신의 기억을 따라 조향했어요", correctPerfumerName + "가 당신의 기억을 따라 조향했어요")
+                .replace("무브가 당신의 기억을 따라 조향했어요", correctPerfumerName + "가 당신의 기억을 따라 조향했어요")
+                .replace("오리온이 당신의 기억을 따라 조향했어요", correctPerfumerName + "이 당신의 기억을 따라 조향했어요")
+                .replace("알고가 당신의 기억을 따라 조향했어요", correctPerfumerName + "가 당신의 기억을 따라 조향했어요");
     }
 
     private String getOrDefault(String value, String defaultValue) {

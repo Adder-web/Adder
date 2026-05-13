@@ -4,6 +4,7 @@ import CharactersSection from "../sections/CharactersSection";
 import Footer from "../components/Footer";
 import SectionTitle from "../components/common/SectionTitle";
 import GlassCard from "../components/common/GlassCard";
+import { useNavigate } from "react-router-dom";
 
 const PROCESS = [
   {
@@ -24,6 +25,8 @@ const PROCESS = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
     <main className="min-h-screen overflow-hidden bg-gradient-to-br from-[#F8FAFF] via-[#DCE9FF] to-[#E9E3FF] text-[#4B3F8C]">
       <Navbar />
@@ -48,7 +51,10 @@ export default function Home() {
             AI 캐릭터와 대화하며 나만의 향을 설계하세요.
           </p>
 
-          <button className="mt-10 rounded-full bg-[#4B3F8C] px-7 py-3 text-sm font-medium text-white shadow-xl shadow-[#4B3F8C]/20 transition hover:-translate-y-0.5">
+          <button
+            className="mt-10 rounded-full bg-[#4B3F8C] px-7 py-3 text-sm font-medium text-white shadow-xl shadow-[#4B3F8C]/20 transition hover:-translate-y-0.5"
+            onClick={() => navigate("/chat")}
+          >
             향 설계 시작하기
           </button>
         </div>

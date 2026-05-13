@@ -1,4 +1,5 @@
 import type { ScentResultData } from "../../data/scentResultData";
+import PerfumeBottle from "../../assets/adder-perfume.png";
 
 type ResultHeroProps = {
   result: ScentResultData;
@@ -7,7 +8,6 @@ type ResultHeroProps = {
 export default function ResultHero({ result }: ResultHeroProps) {
   return (
     <section className="relative grid min-h-[43.875rem] grid-cols-1 items-start gap-12 px-4 pb-16 pt-14 sm:px-8 lg:grid-cols-[1fr_34rem] lg:px-12 lg:pt-16">
-      {" "}
       <div className="relative z-10 pt-4 lg:pt-10">
         <p className="text-[0.6875rem] font-bold tracking-[0.34em] text-[#4B3F8C]">
           SCENT RESULT · {result.date}
@@ -71,9 +71,22 @@ export default function ResultHero({ result }: ResultHeroProps) {
           </button>
         </div>
       </div>
-      <div className="relative z-10 mx-auto mt-2 h-[24rem] w-full max-w-[34rem] overflow-hidden rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-white/80 via-[#EEF4FF]/70 to-[#DFF6F0]/50 shadow-[0_18px_48px_rgba(75,63,140,0.14)] backdrop-blur-xl lg:mt-0">
+
+      <div className="relative z-10 mx-auto mt-2 flex h-[24rem] w-full max-w-[34rem] items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-white/80 via-[#EEF4FF]/70 to-[#DFF6F0]/50 shadow-[0_18px_48px_rgba(75,63,140,0.14)] backdrop-blur-xl lg:mt-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(216,210,255,0.7),transparent_46%),radial-gradient(circle_at_70%_70%,rgba(181,235,220,0.55),transparent_48%)]" />
+
+        <div className="absolute left-8 top-8 h-24 w-24 rounded-full bg-white/45 blur-2xl" />
+        <div className="absolute bottom-8 right-8 h-32 w-32 rounded-full bg-[#B5EBDC]/40 blur-2xl" />
+
+        <img
+          src={PerfumeBottle}
+          alt={`${result.koreanName} 향수 이미지`}
+          className="relative z-10 h-[100%] w-[100%] object-contain drop-shadow-[0_28px_34px_rgba(75,63,140,0.22)]"
+        />
+
+        <div className="pointer-events-none absolute inset-x-10 bottom-8 h-10 rounded-full bg-[#4B3F8C]/10 blur-xl" />
       </div>
+
       <div className="pointer-events-none absolute left-0 top-[22rem] hidden h-[20rem] w-[42rem] opacity-80 lg:block">
         {Array.from({ length: 28 }).map((_, index) => (
           <span

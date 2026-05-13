@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import CharacterSelectModal from "../components/chat/CharacterSelectModal";
 import { sendPerfumeChat, type PerfumeMessage } from "../api/perfumeApi";
-import type { CharacterType } from "../data/perfumeQuestions";
+import type { CharacterType } from "../data/characters";
 import { CHARACTER_TONES } from "../data/characterTone";
 
 type CharacterItem = {
@@ -86,19 +87,19 @@ function createInitialMessage(character: CharacterItem): Message {
 export default function Chat() {
   const navigate = useNavigate();
 
-  const [activeChar, setActiveChar] = useState(0);
-  const [messages, setMessages] = useState<Message[]>([
-    createInitialMessage(CHARACTERS[0]),
-  ]);
+  const [selectedCharacter, setSelectedCharacter] =
+    useState<CharacterItem | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const char = CHARACTERS[activeChar];
-  const characterTone = CHARACTER_TONES[char.id];
+  const char = selectedCharacter;
+  const characterTone = char ? CHARACTER_TONES[char.id] : null;
 
   const isCompleted = currentQuestionIndex >= TOTAL_QUESTION_COUNT;
   const currentStep = Math.min(currentQuestionIndex + 1, TOTAL_QUESTION_COUNT);
@@ -117,20 +118,24 @@ export default function Chat() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleChangeCharacter = (index: number) => {
-    if (isLoading) return;
+  const handleSelectCharacter = (characterId: CharacterType) => {
+    const selected = CHARACTERS.find(
+      (character) => character.id === characterId,
+    );
 
-    setActiveChar(index);
+    if (!selected) return;
 
-    const hasUserMessage = messages.some((message) => message.role === "user");
-
-    if (!hasUserMessage) {
-      setMessages([createInitialMessage(CHARACTERS[index])]);
-    }
+    setSelectedCharacter(selected);
+    setMessages([createInitialMessage(selected)]);
+    setInput("");
+    setCurrentQuestionIndex(0);
+    setIsCharacterModalOpen(false);
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || isCompleted) return;
+    if (!input.trim() || isLoading || isCompleted || !char || !characterTone) {
+      return;
+    }
 
     const userInput = input.trim();
 
@@ -212,7 +217,7 @@ export default function Chat() {
   };
 
   const handleGoResult = () => {
-    if (!isCompleted) return;
+    if (!isCompleted || !char) return;
 
     const resultMessages: PerfumeMessage[] = messages.map((message) => ({
       role: message.role === "ai" ? "assistant" : "user",
@@ -242,13 +247,13 @@ export default function Chat() {
 
   return (
     <div
-      className="flex h-dvh overflow-hidden flex-col"
+      className="flex h-dvh flex-col overflow-hidden"
       style={{ backgroundColor: "#EEF0F8" }}
     >
       <Navbar />
 
       <main className="flex min-h-0 flex-1 overflow-hidden pt-16">
-        <section className="flex min-w-0 min-h-0 flex-1 flex-col lg:w-3/4">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col lg:w-3/4">
           <div
             className="flex shrink-0 items-center gap-2 overflow-x-auto border-b px-4 py-2.5 sm:px-6 sm:py-3"
             style={{
@@ -257,35 +262,27 @@ export default function Chat() {
               backdropFilter: "blur(12px)",
             }}
           >
-            {CHARACTERS.map((c, i) => (
+            {char && (
               <button
-                key={c.id}
-                onClick={() => handleChangeCharacter(i)}
+                type="button"
                 disabled={isLoading}
                 className="flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
-                style={
-                  activeChar === i
-                    ? {
-                        background: c.colorBg,
-                        color: c.color,
-                        border: `1.5px solid ${c.color}40`,
-                      }
-                    : {
-                        background: "transparent",
-                        color: "#8B8BA7",
-                        border: "1.5px solid transparent",
-                      }
-                }
+                style={{
+                  background: char.colorBg,
+                  color: char.color,
+                  border: `1.5px solid ${char.color}40`,
+                }}
               >
                 <div
                   className="h-3.5 w-3.5 rounded-full sm:h-4 sm:w-4"
-                  style={{ background: c.grad }}
+                  style={{ background: char.grad }}
                 />
-                {c.name}
+                {char.name}
               </button>
-            ))}
+            )}
 
             <button
+              type="button"
               className="ml-auto whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm lg:hidden"
               style={{
                 background: "rgba(107,106,222,0.12)",
@@ -306,7 +303,7 @@ export default function Chat() {
                 }`}
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
               >
-                {msg.role === "ai" && (
+                {msg.role === "ai" && char && (
                   <div
                     className="h-8 w-8 flex-shrink-0 rounded-full sm:h-9 sm:w-9"
                     style={{ background: char.grad }}
@@ -346,7 +343,7 @@ export default function Chat() {
               </div>
             ))}
 
-            {isLoading && (
+            {isLoading && char && characterTone && (
               <div
                 className="flex flex-row items-end gap-2.5 sm:gap-3"
                 style={{ animation: "fadeSlideUp 0.3s ease-out" }}
@@ -395,14 +392,16 @@ export default function Chat() {
                 <input
                   className="text-text-dark placeholder-text-gray flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed"
                   placeholder={
-                    isCompleted
-                      ? "모든 질문이 완료되었어요. 결과를 확인해보세요."
-                      : isLoading
-                        ? `${characterTone.name}가 향을 조합하고 있어요...`
-                        : `${characterTone.name}에게 이야기해요...`
+                    !char || !characterTone
+                      ? "먼저 조향사를 선택해주세요."
+                      : isCompleted
+                        ? "모든 질문이 완료되었어요. 결과를 확인해보세요."
+                        : isLoading
+                          ? `${characterTone.name}가 향을 조합하고 있어요...`
+                          : `${characterTone.name}에게 이야기해요...`
                   }
                   value={input}
-                  disabled={isLoading || isCompleted}
+                  disabled={!char || isLoading || isCompleted}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
                   onFocus={(e) => {
@@ -425,8 +424,9 @@ export default function Chat() {
               </div>
 
               <button
+                type="button"
                 onClick={sendMessage}
-                disabled={isLoading || isCompleted || !input.trim()}
+                disabled={!char || isLoading || isCompleted || !input.trim()}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11"
                 style={{
                   background: "linear-gradient(135deg, #6B6ADE, #9B89D4)",
@@ -448,7 +448,7 @@ export default function Chat() {
         </section>
 
         <aside
-          className="hidden w-[300px] shrink-0 flex-col overflow-hidden border-l xl:w-[340px] lg:flex"
+          className="hidden w-[300px] shrink-0 flex-col overflow-hidden border-l lg:flex xl:w-[340px]"
           style={{
             borderColor: "rgba(107,106,222,0.15)",
             backgroundColor: "rgba(255,255,255,0.6)",
@@ -490,6 +490,7 @@ export default function Chat() {
               </p>
 
               <button
+                type="button"
                 onClick={() => setDrawerOpen(false)}
                 className="text-text-gray hover:text-text-dark"
               >
@@ -508,6 +509,11 @@ export default function Chat() {
           </div>
         </div>
       )}
+
+      <CharacterSelectModal
+        isOpen={isCharacterModalOpen}
+        onSelect={handleSelectCharacter}
+      />
 
       <style>{`
         @keyframes fadeSlideUp {
